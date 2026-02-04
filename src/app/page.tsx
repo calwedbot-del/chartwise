@@ -26,6 +26,7 @@ import DrawingTools, { useDrawings } from '@/components/DrawingTools';
 import MarketHeatmap from '@/components/MarketHeatmap';
 import AssetScreener from '@/components/AssetScreener';
 import EconomicCalendar from '@/components/EconomicCalendar';
+import OverlayComparison from '@/components/OverlayComparison';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -54,6 +55,7 @@ export default function Home() {
   const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area' | 'heikinashi'>('candlestick');
   const [showCompare, setShowCompare] = useState(false);
   const [showMultiChart, setShowMultiChart] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
   const chartRef = useRef<ChartRef>(null);
   
   const { theme, toggleTheme, mounted } = useTheme();
@@ -316,6 +318,13 @@ export default function Home() {
               title="Compare assets"
             >
               📊
+            </button>
+            <button
+              onClick={() => setShowOverlay(true)}
+              className="theme-toggle"
+              title="Overlay comparison (normalized %)"
+            >
+              📉
             </button>
             <button
               onClick={() => setShowMultiChart(true)}
@@ -810,6 +819,12 @@ export default function Home() {
         isOpen={showMultiChart}
         onClose={() => setShowMultiChart(false)}
         initialSymbols={[selectedAsset, 'ETH']}
+      />
+
+      <OverlayComparison
+        isOpen={showOverlay}
+        onClose={() => setShowOverlay(false)}
+        primaryAsset={selectedAsset}
       />
     </main>
   );
