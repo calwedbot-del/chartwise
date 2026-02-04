@@ -34,6 +34,8 @@ export interface AIAnalysis {
   trend: 'bullish' | 'bearish' | 'sideways';
   trendStrength: number;
   summary: string;
+  sentimentScore: number; // -100 (extremely bearish) to +100 (extremely bullish)
+  recommendation: 'Strong Buy' | 'Buy' | 'Hold' | 'Sell' | 'Strong Sell';
 }
 
 // Find local peaks and troughs
@@ -295,12 +297,62 @@ export function detectTrend(candles: OHLCV[]): { trend: 'bullish' | 'bearish' | 
   }
 }
 
+// Calculate sentiment score from analysis components
+function calculateSentimentScore(
+  trend: 'bullish' | 'bearish' | 'sideways',
+  trendStrength: number,
+  patterns: Pattern[],
+  candles: OHLCV[]
+): number {
+  let score = 0;
+  
+  // Trend contribution (up to ±50 points)
+  if (trend === 'bullish') {
+    score += (trendStrength / 100) * 50;
+  } else if (trend === 'bearish') {
+    score -= (trendStrength / 100) * 50;
+  }
+  
+  // Pattern contribution (up to ±30 points)
+  for (const pattern of patterns) {
+    const patternScore = (pattern.confidence / 100) * 15;
+    if (pattern.type === 'bullish') {
+      score += patternScore;
+    } else if (pattern.type === 'bearish') {
+      score -= patternScore;
+    }
+  }
+  
+  // Recent momentum (up to ±20 points)
+  if (candles.length >= 5) {
+    const recent = candles.slice(-5);
+    const priceChange = (recent[recent.length - 1].close - recent[0].close) / recent[0].close;
+    score += priceChange * 200; // Scale to roughly ±20
+  }
+  
+  // Clamp to -100 to +100
+  return Math.max(-100, Math.min(100, Math.round(score)));
+}
+
+// Get recommendation based on sentiment score
+function getRecommendation(score: number): 'Strong Buy' | 'Buy' | 'Hold' | 'Sell' | 'Strong Sell' {
+  if (score >= 60) return 'Strong Buy';
+  if (score >= 25) return 'Buy';
+  if (score >= -25) return 'Hold';
+  if (score >= -60) return 'Sell';
+  return 'Strong Sell';
+}
+
 // Full AI Analysis
 export function runAIAnalysis(candles: OHLCV[]): AIAnalysis {
   const trendLines = detectTrendLines(candles);
   const supportResistance = detectSupportResistance(candles);
   const patterns = detectPatterns(candles);
   const { trend, strength: trendStrength } = detectTrend(candles);
+  
+  // Calculate sentiment and recommendation
+  const sentimentScore = calculateSentimentScore(trend, trendStrength, patterns, candles);
+  const recommendation = getRecommendation(sentimentScore);
   
   // Generate summary
   let summary = `Market is in a ${trend} trend`;
@@ -335,5 +387,7 @@ export function runAIAnalysis(candles: OHLCV[]): AIAnalysis {
     trend,
     trendStrength,
     summary,
+    sentimentScore,
+    recommendation,
   };
 }

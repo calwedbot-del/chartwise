@@ -319,6 +319,49 @@ export default function Home() {
               {aiAnalysis.trend.toUpperCase()} ({aiAnalysis.trendStrength}%)
             </span>
           </div>
+          
+          {/* Sentiment Score & Recommendation */}
+          <div className="flex flex-wrap items-center gap-4 mb-4 p-3 rounded-lg bg-[var(--bg-hover)]">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[var(--text-secondary)]">Sentiment:</span>
+              <span className={`text-2xl font-bold ${
+                aiAnalysis.sentimentScore >= 25 ? 'text-green-400' :
+                aiAnalysis.sentimentScore <= -25 ? 'text-red-400' :
+                'text-yellow-400'
+              }`}>
+                {aiAnalysis.sentimentScore > 0 ? '+' : ''}{aiAnalysis.sentimentScore}
+              </span>
+            </div>
+            <div className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+              aiAnalysis.recommendation === 'Strong Buy' ? 'bg-green-500 text-white' :
+              aiAnalysis.recommendation === 'Buy' ? 'bg-green-500/30 text-green-400' :
+              aiAnalysis.recommendation === 'Hold' ? 'bg-yellow-500/30 text-yellow-400' :
+              aiAnalysis.recommendation === 'Sell' ? 'bg-red-500/30 text-red-400' :
+              'bg-red-500 text-white'
+            }`}>
+              {aiAnalysis.recommendation}
+            </div>
+            {/* Sentiment Bar */}
+            <div className="flex-1 min-w-[120px]">
+              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all ${
+                    aiAnalysis.sentimentScore >= 0 ? 'bg-green-400' : 'bg-red-400'
+                  }`}
+                  style={{
+                    width: `${Math.abs(aiAnalysis.sentimentScore) / 2}%`,
+                    marginLeft: aiAnalysis.sentimentScore >= 0 ? '50%' : `${50 - Math.abs(aiAnalysis.sentimentScore) / 2}%`
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Bearish</span>
+                <span>Neutral</span>
+                <span>Bullish</span>
+              </div>
+            </div>
+          </div>
+          
           <p className="text-gray-300 mb-4">{aiAnalysis.summary}</p>
           
           {/* Support/Resistance Levels */}
