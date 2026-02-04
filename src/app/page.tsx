@@ -9,9 +9,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { usePriceAlerts } from '@/hooks/usePriceAlerts';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { usePortfolio } from '@/hooks/usePortfolio';
 import Watchlist from '@/components/Watchlist';
 import PriceAlerts from '@/components/PriceAlerts';
 import CompareModal from '@/components/CompareModal';
+import Portfolio from '@/components/Portfolio';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -32,7 +34,9 @@ export default function Home() {
   const { theme, toggleTheme, mounted } = useTheme();
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, mounted: watchlistMounted } = useWatchlist();
   const { alerts, addAlert, removeAlert, checkAlerts, requestNotificationPermission, mounted: alertsMounted } = usePriceAlerts();
+  const { holdings, addHolding, removeHolding, getTotalValue, getTotalCost, getHoldingsWithPrices, mounted: portfolioMounted } = usePortfolio();
   const [isMobile, setIsMobile] = useState(false);
+  const [assetPrices, setAssetPrices] = useState<Record<string, number>>({});
   const assets = getSupportedAssets();
   
   // Detect mobile for responsive chart height
@@ -88,6 +92,46 @@ export default function Home() {
       checkAlerts(selectedAsset, assetInfo.price);
     }
   }, [assetInfo, selectedAsset, alertsMounted, checkAlerts]);
+
+  // Update asset prices for portfolio tracking
+  useEffect(() => {
+    if (assetInfo) {
+      setAssetPrices(prev => ({
+        ...prev,
+        [selectedAsset]: assetInfo.price
+      }));
+    }
+  }, [assetInfo, selectedAsset]);
+
+  // Fetch prices for all portfolio holdings
+  useEffect(() => {
+    if (!portfolioMounted || holdings.length === 0) return;
+    
+    async function fetchPortfolioPrices() {
+      const prices: Record<string, number> = {};
+      for (const holding of holdings) {
+        try {
+          const asset = assets.find(a => a.symbol === holding.symbol);
+          if (asset?.type === 'stock') {
+            const info = await fetchStockInfo(holding.symbol);
+            if (info) prices[holding.symbol] = info.price;
+          } else {
+            const info = await fetchAssetInfo(holding.symbol);
+            if (info) prices[holding.symbol] = info.price;
+          }
+        } catch {
+          // Use avgCost as fallback
+          prices[holding.symbol] = holding.avgCost;
+        }
+      }
+      setAssetPrices(prev => ({ ...prev, ...prices }));
+    }
+    
+    fetchPortfolioPrices();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchPortfolioPrices, 60000);
+    return () => clearInterval(interval);
+  }, [holdings, portfolioMounted]);
   
   // Calculate indicators
   const indicators = {
@@ -303,6 +347,19 @@ export default function Home() {
             onRequestPermission={requestNotificationPermission}
           />
         </div>
+      )}
+
+      {/* Portfolio Tracker */}
+      {portfolioMounted && (
+        <Portfolio
+          holdings={getHoldingsWithPrices(assetPrices)}
+          totalValue={getTotalValue(assetPrices)}
+          totalCost={getTotalCost()}
+          onAdd={addHolding}
+          onRemove={removeHolding}
+          onSelectAsset={setSelectedAsset}
+          availableSymbols={assets.map(a => a.symbol)}
+        />
       )}
       
       {/* AI Analysis Card */}
