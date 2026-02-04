@@ -173,3 +173,73 @@ export function VWAP(candles: OHLCV[]): number[] {
   
   return result;
 }
+
+// Fibonacci Retracement Levels
+export interface FibonacciLevel {
+  level: number;
+  price: number;
+  label: string;
+}
+
+export function FibonacciRetracement(candles: OHLCV[]): FibonacciLevel[] {
+  if (candles.length === 0) return [];
+  
+  // Find the high and low of the period
+  let high = candles[0].high;
+  let low = candles[0].low;
+  
+  for (const candle of candles) {
+    if (candle.high > high) high = candle.high;
+    if (candle.low < low) low = candle.low;
+  }
+  
+  const diff = high - low;
+  
+  // Standard Fibonacci retracement levels
+  const fibLevels = [
+    { level: 0, label: '0%' },
+    { level: 0.236, label: '23.6%' },
+    { level: 0.382, label: '38.2%' },
+    { level: 0.5, label: '50%' },
+    { level: 0.618, label: '61.8%' },
+    { level: 0.786, label: '78.6%' },
+    { level: 1, label: '100%' },
+  ];
+  
+  // Calculate price at each level (from high)
+  return fibLevels.map(fib => ({
+    level: fib.level,
+    price: high - (diff * fib.level),
+    label: fib.label
+  }));
+}
+
+// Fibonacci Extension Levels (for price targets)
+export function FibonacciExtension(candles: OHLCV[]): FibonacciLevel[] {
+  if (candles.length === 0) return [];
+  
+  let high = candles[0].high;
+  let low = candles[0].low;
+  
+  for (const candle of candles) {
+    if (candle.high > high) high = candle.high;
+    if (candle.low < low) low = candle.low;
+  }
+  
+  const diff = high - low;
+  
+  // Extension levels beyond 100%
+  const extLevels = [
+    { level: 1.272, label: '127.2%' },
+    { level: 1.414, label: '141.4%' },
+    { level: 1.618, label: '161.8%' },
+    { level: 2.0, label: '200%' },
+    { level: 2.618, label: '261.8%' },
+  ];
+  
+  return extLevels.map(ext => ({
+    level: ext.level,
+    price: low + (diff * ext.level),
+    label: ext.label
+  }));
+}
