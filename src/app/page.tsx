@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { fetchCryptoOHLCV, fetchAssetInfo, getSupportedAssets, AssetInfo, fetchStockOHLCV, fetchStockInfo } from '@/lib/api';
-import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands } from '@/utils/indicators';
+import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands, FibonacciRetracement, FibonacciLevel } from '@/utils/indicators';
 import { runAIAnalysis, AIAnalysis } from '@/utils/aiAnalysis';
 import { useTheme } from '@/hooks/useTheme';
 import { useWatchlist } from '@/hooks/useWatchlist';
@@ -92,6 +92,11 @@ export default function Home() {
   // Calculate MACD for display
   const macdData = MACD(ohlcvData.map(d => d.close));
   const currentMACD = macdData.histogram[macdData.histogram.length - 1];
+  
+  // Calculate Fibonacci levels
+  const fibonacciLevels: FibonacciLevel[] = activeIndicators.includes('fib') 
+    ? FibonacciRetracement(ohlcvData)
+    : [];
   
   const toggleIndicator = (indicator: string) => {
     if (activeIndicators.includes(indicator)) {
@@ -323,7 +328,8 @@ export default function Home() {
           { id: 'sma20', label: 'SMA 20' },
           { id: 'sma50', label: 'SMA 50' },
           { id: 'ema', label: 'EMA 12/26' },
-          { id: 'bb', label: 'Bollinger Bands' },
+          { id: 'bb', label: 'Bollinger' },
+          { id: 'fib', label: 'Fibonacci' },
         ].map(ind => (
           <button
             key={ind.id}
@@ -347,6 +353,7 @@ export default function Home() {
               data={ohlcvData} 
               indicators={indicators}
               supportResistance={aiAnalysis?.supportResistance || []}
+              fibonacciLevels={fibonacciLevels}
               height={isMobile ? 350 : 500}
               chartType={chartType}
             />

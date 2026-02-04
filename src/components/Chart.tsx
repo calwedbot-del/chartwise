@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
-import { OHLCV } from '@/utils/indicators';
+import { OHLCV, FibonacciLevel } from '@/utils/indicators';
 import { SupportResistance } from '@/utils/aiAnalysis';
 
 export type ChartType = 'candlestick' | 'line' | 'area';
@@ -17,6 +17,7 @@ interface ChartProps {
     ema26?: number[];
     bb?: { upper: number[]; middle: number[]; lower: number[] };
   };
+  fibonacciLevels?: FibonacciLevel[];
   height?: number;
   chartType?: ChartType;
   showVolume?: boolean;
@@ -26,6 +27,7 @@ export default function Chart({
   data, 
   supportResistance = [],
   indicators,
+  fibonacciLevels = [],
   height = 500,
   chartType = 'candlestick',
   showVolume = true
@@ -202,6 +204,33 @@ export default function Chart({
       ] as any);
     });
     
+    // Add Fibonacci retracement levels
+    if (fibonacciLevels.length > 0) {
+      const fibColors: Record<string, string> = {
+        '0%': 'rgba(255, 152, 0, 0.8)',     // Orange - high
+        '23.6%': 'rgba(255, 193, 7, 0.6)',  // Amber
+        '38.2%': 'rgba(255, 235, 59, 0.6)', // Yellow
+        '50%': 'rgba(76, 175, 80, 0.6)',    // Green - key level
+        '61.8%': 'rgba(33, 150, 243, 0.6)', // Blue - golden ratio
+        '78.6%': 'rgba(156, 39, 176, 0.6)', // Purple
+        '100%': 'rgba(255, 152, 0, 0.8)',   // Orange - low
+      };
+      
+      fibonacciLevels.forEach((fib) => {
+        const color = fibColors[fib.label] || 'rgba(158, 158, 158, 0.5)';
+        
+        // Create price line for each Fibonacci level
+        mainSeries.createPriceLine({
+          price: fib.price,
+          color: color,
+          lineWidth: 1,
+          lineStyle: 2, // Dashed
+          axisLabelVisible: true,
+          title: `Fib ${fib.label}`,
+        });
+      });
+    }
+    
     // Fit content
     chart.timeScale().fitContent();
     
@@ -218,7 +247,7 @@ export default function Chart({
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [data, supportResistance, indicators, height, chartType, showVolume]);
+  }, [data, supportResistance, indicators, fibonacciLevels, height, chartType, showVolume]);
   
   return (
     <div className="chart-container p-1">
