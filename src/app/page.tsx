@@ -31,6 +31,7 @@ import OverlayComparison from '@/components/OverlayComparison';
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
 const IndicatorChart = dynamic(() => import('@/components/IndicatorChart'), { ssr: false });
+const StrategyBacktest = dynamic(() => import('@/components/StrategyBacktest'), { ssr: false });
 
 const TIMEFRAMES = ['1d', '7d', '14d', '30d', '90d', '180d', '365d'];
 const TIMEFRAME_LABELS: Record<string, string> = {
@@ -612,6 +613,11 @@ export default function Home() {
 
       {/* Economic Calendar */}
       <EconomicCalendar />
+
+      {/* Strategy Backtester */}
+      {ohlcvData.length > 0 && (
+        <StrategyBacktest data={ohlcvData} symbol={selectedAsset} />
+      )}
 
       {/* Pattern Detection & Volume Profile */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
