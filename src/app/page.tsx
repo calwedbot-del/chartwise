@@ -14,11 +14,21 @@ import Watchlist from '@/components/Watchlist';
 import PriceAlerts from '@/components/PriceAlerts';
 import CompareModal from '@/components/CompareModal';
 import Portfolio from '@/components/Portfolio';
+import AssetSearch from '@/components/AssetSearch';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
 
 const TIMEFRAMES = ['1d', '7d', '14d', '30d', '90d', '180d', '365d'];
+const TIMEFRAME_LABELS: Record<string, string> = {
+  '1d': '24h',
+  '7d': '1W',
+  '14d': '2W',
+  '30d': '1M',
+  '90d': '3M',
+  '180d': '6M',
+  '365d': '1Y',
+};
 
 export default function Home() {
   const [selectedAsset, setSelectedAsset] = useState('ETH');
@@ -27,6 +37,7 @@ export default function Home() {
   const [assetInfo, setAssetInfo] = useState<AssetInfo | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeIndicators, setActiveIndicators] = useState<string[]>(['sma20', 'bb']);
   const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
   const [showCompare, setShowCompare] = useState(false);
@@ -51,33 +62,45 @@ export default function Home() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
+      setError(null);
       
-      const days = parseInt(timeframe.replace('d', ''));
-      const asset = assets.find(a => a.symbol === selectedAsset);
-      const isStock = asset?.type === 'stock';
-      
-      let ohlcv: OHLCV[];
-      let info: AssetInfo | null;
-      
-      if (isStock) {
-        [ohlcv, info] = await Promise.all([
-          fetchStockOHLCV(selectedAsset, days),
-          fetchStockInfo(selectedAsset),
-        ]);
-      } else {
-        [ohlcv, info] = await Promise.all([
-          fetchCryptoOHLCV(selectedAsset, '1d', days),
-          fetchAssetInfo(selectedAsset),
-        ]);
-      }
-      
-      setOhlcvData(ohlcv);
-      setAssetInfo(info);
-      
-      // Run AI analysis
-      if (ohlcv.length > 20) {
-        const analysis = runAIAnalysis(ohlcv);
-        setAiAnalysis(analysis);
+      try {
+        const days = parseInt(timeframe.replace('d', ''));
+        const asset = assets.find(a => a.symbol === selectedAsset);
+        const isStock = asset?.type === 'stock';
+        
+        let ohlcv: OHLCV[];
+        let info: AssetInfo | null;
+        
+        if (isStock) {
+          [ohlcv, info] = await Promise.all([
+            fetchStockOHLCV(selectedAsset, days),
+            fetchStockInfo(selectedAsset),
+          ]);
+        } else {
+          [ohlcv, info] = await Promise.all([
+            fetchCryptoOHLCV(selectedAsset, '1d', days),
+            fetchAssetInfo(selectedAsset),
+          ]);
+        }
+        
+        if (ohlcv.length === 0) {
+          setError(`No data available for ${selectedAsset}`);
+        }
+        
+        setOhlcvData(ohlcv);
+        setAssetInfo(info);
+        
+        // Run AI analysis
+        if (ohlcv.length > 20) {
+          const analysis = runAIAnalysis(ohlcv);
+          setAiAnalysis(analysis);
+        } else {
+          setAiAnalysis(null);
+        }
+      } catch (err) {
+        setError(`Failed to load data for ${selectedAsset}. Please try again.`);
+        console.error(err);
       }
       
       setLoading(false);
@@ -201,6 +224,7 @@ export default function Home() {
               ChartWise
             </h1>
             <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">AI-Powered</span>
+            <AssetSearch onSelect={setSelectedAsset} currentAsset={selectedAsset} />
           </div>
           {/* Compare & Theme Buttons */}
           <div className="flex items-center gap-2">
@@ -295,11 +319,25 @@ export default function Home() {
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
-              {tf}
+              {TIMEFRAME_LABELS[tf] || tf}
             </button>
           ))}
         </div>
       </header>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 flex items-center gap-2">
+          <span>⚠️</span>
+          <span>{error}</span>
+          <button 
+            onClick={() => setError(null)}
+            className="ml-auto hover:text-red-300"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       
       {/* Price Info */}
       {assetInfo && (
