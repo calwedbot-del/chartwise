@@ -7,7 +7,9 @@ import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands, FibonacciRetracement, Fibon
 import { runAIAnalysis, AIAnalysis } from '@/utils/aiAnalysis';
 import { useTheme } from '@/hooks/useTheme';
 import { useWatchlist } from '@/hooks/useWatchlist';
+import { usePriceAlerts } from '@/hooks/usePriceAlerts';
 import Watchlist from '@/components/Watchlist';
+import PriceAlerts from '@/components/PriceAlerts';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -26,6 +28,7 @@ export default function Home() {
   
   const { theme, toggleTheme, mounted } = useTheme();
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, mounted: watchlistMounted } = useWatchlist();
+  const { alerts, addAlert, removeAlert, checkAlerts, requestNotificationPermission, mounted: alertsMounted } = usePriceAlerts();
   const [isMobile, setIsMobile] = useState(false);
   const assets = getSupportedAssets();
   
@@ -75,6 +78,13 @@ export default function Home() {
     
     loadData();
   }, [selectedAsset, timeframe]);
+  
+  // Check price alerts when price updates
+  useEffect(() => {
+    if (assetInfo && alertsMounted) {
+      checkAlerts(selectedAsset, assetInfo.price);
+    }
+  }, [assetInfo, selectedAsset, alertsMounted, checkAlerts]);
   
   // Calculate indicators
   const indicators = {
@@ -240,6 +250,20 @@ export default function Home() {
           onSelectAsset={setSelectedAsset}
           onRemove={removeFromWatchlist}
         />
+      )}
+      
+      {/* Price Alerts */}
+      {alertsMounted && assetInfo && (
+        <div className="mb-6">
+          <PriceAlerts
+            symbol={selectedAsset}
+            currentPrice={assetInfo.price}
+            alerts={alerts}
+            onAddAlert={addAlert}
+            onRemoveAlert={removeAlert}
+            onRequestPermission={requestNotificationPermission}
+          />
+        </div>
       )}
       
       {/* AI Analysis Card */}
