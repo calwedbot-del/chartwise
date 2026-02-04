@@ -8,6 +8,7 @@ import { runAIAnalysis, AIAnalysis } from '@/utils/aiAnalysis';
 import { useTheme } from '@/hooks/useTheme';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { usePriceAlerts } from '@/hooks/usePriceAlerts';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import Watchlist from '@/components/Watchlist';
 import PriceAlerts from '@/components/PriceAlerts';
 
@@ -116,6 +117,33 @@ export default function Home() {
       setActiveIndicators([...activeIndicators, indicator]);
     }
   };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onNextAsset: () => {
+      const currentIndex = assets.findIndex(a => a.symbol === selectedAsset);
+      const nextIndex = (currentIndex + 1) % assets.length;
+      setSelectedAsset(assets[nextIndex].symbol);
+    },
+    onPrevAsset: () => {
+      const currentIndex = assets.findIndex(a => a.symbol === selectedAsset);
+      const prevIndex = (currentIndex - 1 + assets.length) % assets.length;
+      setSelectedAsset(assets[prevIndex].symbol);
+    },
+    onToggleTheme: toggleTheme,
+    onToggleWatchlist: () => toggleWatchlist(selectedAsset),
+    onNextTimeframe: () => {
+      const currentIndex = TIMEFRAMES.indexOf(timeframe);
+      const nextIndex = (currentIndex + 1) % TIMEFRAMES.length;
+      setTimeframe(TIMEFRAMES[nextIndex]);
+    },
+    onPrevTimeframe: () => {
+      const currentIndex = TIMEFRAMES.indexOf(timeframe);
+      const prevIndex = (currentIndex - 1 + TIMEFRAMES.length) % TIMEFRAMES.length;
+      setTimeframe(TIMEFRAMES[prevIndex]);
+    },
+    onToggleIndicator: toggleIndicator,
+  });
   
   return (
     <main className="min-h-screen p-4 md:p-6">
