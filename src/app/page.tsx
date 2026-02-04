@@ -6,6 +6,8 @@ import { fetchCryptoOHLCV, fetchAssetInfo, getSupportedAssets, AssetInfo, fetchS
 import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands } from '@/utils/indicators';
 import { runAIAnalysis, AIAnalysis } from '@/utils/aiAnalysis';
 import { useTheme } from '@/hooks/useTheme';
+import { useWatchlist } from '@/hooks/useWatchlist';
+import Watchlist from '@/components/Watchlist';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -23,6 +25,7 @@ export default function Home() {
   const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
   
   const { theme, toggleTheme, mounted } = useTheme();
+  const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, mounted: watchlistMounted } = useWatchlist();
   const [isMobile, setIsMobile] = useState(false);
   const assets = getSupportedAssets();
   
@@ -126,33 +129,57 @@ export default function Home() {
           <div className="text-xs text-gray-500 mb-2">CRYPTO</div>
           <div className="asset-scroll flex flex-wrap sm:flex-wrap gap-2 mb-3">
             {assets.filter(a => a.type === 'crypto').map(asset => (
-              <button
-                key={asset.symbol}
-                onClick={() => setSelectedAsset(asset.symbol)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  selectedAsset === asset.symbol
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-                }`}
-              >
-                {asset.symbol}
-              </button>
+              <div key={asset.symbol} className="flex items-center gap-1">
+                <button
+                  onClick={() => setSelectedAsset(asset.symbol)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedAsset === asset.symbol
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                  }`}
+                >
+                  {asset.symbol}
+                </button>
+                {watchlistMounted && (
+                  <button
+                    onClick={() => toggleWatchlist(asset.symbol)}
+                    className={`p-1 text-sm transition-all ${
+                      isInWatchlist(asset.symbol) ? 'text-yellow-400' : 'text-[var(--text-secondary)] hover:text-yellow-400'
+                    }`}
+                    title={isInWatchlist(asset.symbol) ? 'Remove from watchlist' : 'Add to watchlist'}
+                  >
+                    {isInWatchlist(asset.symbol) ? '⭐' : '☆'}
+                  </button>
+                )}
+              </div>
             ))}
           </div>
           <div className="text-xs text-gray-500 mb-2">STOCKS</div>
           <div className="asset-scroll flex flex-wrap sm:flex-wrap gap-2">
             {assets.filter(a => a.type === 'stock').map(asset => (
-              <button
-                key={asset.symbol}
-                onClick={() => setSelectedAsset(asset.symbol)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  selectedAsset === asset.symbol
-                    ? 'bg-green-500 text-white'
-                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-                }`}
-              >
-                {asset.symbol}
-              </button>
+              <div key={asset.symbol} className="flex items-center gap-1">
+                <button
+                  onClick={() => setSelectedAsset(asset.symbol)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedAsset === asset.symbol
+                      ? 'bg-green-500 text-white'
+                      : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                  }`}
+                >
+                  {asset.symbol}
+                </button>
+                {watchlistMounted && (
+                  <button
+                    onClick={() => toggleWatchlist(asset.symbol)}
+                    className={`p-1 text-sm transition-all ${
+                      isInWatchlist(asset.symbol) ? 'text-yellow-400' : 'text-[var(--text-secondary)] hover:text-yellow-400'
+                    }`}
+                    title={isInWatchlist(asset.symbol) ? 'Remove from watchlist' : 'Add to watchlist'}
+                  >
+                    {isInWatchlist(asset.symbol) ? '⭐' : '☆'}
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -197,6 +224,16 @@ export default function Home() {
             <div className="text-xl font-medium">${assetInfo.low24h.toLocaleString()}</div>
           </div>
         </div>
+      )}
+      
+      {/* Watchlist */}
+      {watchlistMounted && (
+        <Watchlist
+          watchlist={watchlist}
+          selectedAsset={selectedAsset}
+          onSelectAsset={setSelectedAsset}
+          onRemove={removeFromWatchlist}
+        />
       )}
       
       {/* AI Analysis Card */}
