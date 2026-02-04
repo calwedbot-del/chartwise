@@ -95,3 +95,66 @@ body {
   border: 1px solid rgba(41, 98, 255, 0.3);
   border-radius: 12px;
 }
+
+/* Mobile responsive improvements */
+@media (max-width: 640px) {
+  /* Scrollable asset buttons */
+  .asset-scroll {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .asset-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .asset-scroll button {
+    flex-shrink: 0;
+  }
+  
+  /* Scrollable indicators */
+  .indicator-scroll {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.5rem;
+  }
+  
+  .indicator-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Smaller chart on mobile */
+  .chart-mobile {
+    height: 350px !important;
+  }
+  
+  /* Compact price cards */
+  .price-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  .price-grid > div {
+    padding: 0.75rem !important;
+  }
+  
+  .price-grid .text-2xl {
+    font-size: 1.25rem !important;
+  }
+  
+  /* Tighter spacing */
+  main {
+    padding: 0.75rem !important;
+  }
+  
+  /* Smaller header */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+}
