@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { ChartRef } from '@/components/Chart';
 import dynamic from 'next/dynamic';
 import { fetchCryptoOHLCV, fetchAssetInfo, getSupportedAssets, AssetInfo, fetchStockOHLCV, fetchStockInfo } from '@/lib/api';
 import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands, FibonacciRetracement, FibonacciLevel, VWAP } from '@/utils/indicators';
@@ -41,6 +42,7 @@ export default function Home() {
   const [activeIndicators, setActiveIndicators] = useState<string[]>(['sma20', 'bb']);
   const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
   const [showCompare, setShowCompare] = useState(false);
+  const chartRef = useRef<ChartRef>(null);
   
   const { theme, toggleTheme, mounted } = useTheme();
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, mounted: watchlistMounted } = useWatchlist();
@@ -187,6 +189,19 @@ export default function Home() {
     }
   };
 
+  // Screenshot function
+  const handleScreenshot = () => {
+    if (chartRef.current) {
+      const dataUrl = chartRef.current.takeScreenshot();
+      if (dataUrl) {
+        const link = document.createElement('a');
+        link.download = `chartwise-${selectedAsset}-${timeframe}-${Date.now()}.png`;
+        link.href = dataUrl;
+        link.click();
+      }
+    }
+  };
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onNextAsset: () => {
@@ -226,8 +241,15 @@ export default function Home() {
             <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">AI-Powered</span>
             <AssetSearch onSelect={setSelectedAsset} currentAsset={selectedAsset} />
           </div>
-          {/* Compare & Theme Buttons */}
+          {/* Tools: Screenshot, Compare, Theme */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleScreenshot}
+              className="theme-toggle"
+              title="Download chart screenshot"
+            >
+              📷
+            </button>
             <button
               onClick={() => setShowCompare(true)}
               className="theme-toggle"
@@ -553,6 +575,7 @@ export default function Home() {
         ) : (
           <div className="chart-mobile sm:h-auto">
             <Chart 
+              ref={chartRef}
               data={ohlcvData} 
               indicators={indicators}
               supportResistance={aiAnalysis?.supportResistance || []}

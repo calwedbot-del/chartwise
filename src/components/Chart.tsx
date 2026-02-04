@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { createChart, ColorType, CrosshairMode, IChartApi } from 'lightweight-charts';
 import { OHLCV, FibonacciLevel } from '@/utils/indicators';
 import { SupportResistance } from '@/utils/aiAnalysis';
 
 export type ChartType = 'candlestick' | 'line' | 'area';
+
+export interface ChartRef {
+  takeScreenshot: () => string | null;
+}
 
 interface ChartProps {
   data: OHLCV[];
@@ -24,7 +28,7 @@ interface ChartProps {
   showVolume?: boolean;
 }
 
-export default function Chart({ 
+const Chart = forwardRef<ChartRef, ChartProps>(function Chart({ 
   data, 
   supportResistance = [],
   indicators,
@@ -32,8 +36,20 @@ export default function Chart({
   height = 500,
   chartType = 'candlestick',
   showVolume = true
-}: ChartProps) {
+}, ref) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+
+  // Expose screenshot function
+  useImperativeHandle(ref, () => ({
+    takeScreenshot: () => {
+      if (chartRef.current) {
+        const canvas = chartRef.current.takeScreenshot();
+        return canvas.toDataURL('image/png');
+      }
+      return null;
+    }
+  }));
   
   useEffect(() => {
     if (!chartContainerRef.current || data.length === 0) return;
@@ -62,6 +78,9 @@ export default function Chart({
       width: chartContainerRef.current.clientWidth,
       height: height,
     });
+
+    // Store chart reference for screenshots
+    chartRef.current = chart;
     
     // Add main price series based on chart type
     let mainSeries: any;
@@ -262,6 +281,7 @@ export default function Chart({
     
     return () => {
       window.removeEventListener('resize', handleResize);
+      chartRef.current = null;
       chart.remove();
     };
   }, [data, supportResistance, indicators, fibonacciLevels, height, chartType, showVolume]);
@@ -271,4 +291,6 @@ export default function Chart({
       <div ref={chartContainerRef} />
     </div>
   );
-}
+});
+
+export default Chart;
