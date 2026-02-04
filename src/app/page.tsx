@@ -59,6 +59,24 @@ export default function Home() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Parse URL parameters on mount (for shareable links)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const assetParam = params.get('asset');
+    const tfParam = params.get('tf');
+    const indParam = params.get('ind');
+    const typeParam = params.get('type');
+    
+    if (assetParam) setSelectedAsset(assetParam);
+    if (tfParam && TIMEFRAMES.includes(tfParam)) setTimeframe(tfParam);
+    if (indParam) setActiveIndicators(indParam.split(',').filter(Boolean));
+    if (typeParam && ['candlestick', 'line', 'area'].includes(typeParam)) {
+      setChartType(typeParam as 'candlestick' | 'line' | 'area');
+    }
+  }, []);
   
   // Fetch data
   useEffect(() => {
@@ -241,8 +259,23 @@ export default function Home() {
             <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">AI-Powered</span>
             <AssetSearch onSelect={setSelectedAsset} currentAsset={selectedAsset} />
           </div>
-          {/* Tools: Screenshot, Compare, Theme */}
+          {/* Tools: Share, Screenshot, Compare, Theme */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                const url = `${window.location.origin}?asset=${selectedAsset}&tf=${timeframe}&ind=${activeIndicators.join(',')}&type=${chartType}`;
+                try {
+                  await navigator.clipboard.writeText(url);
+                  alert('Chart link copied to clipboard!');
+                } catch {
+                  prompt('Copy this link:', url);
+                }
+              }}
+              className="theme-toggle"
+              title="Copy shareable link"
+            >
+              🔗
+            </button>
             <button
               onClick={handleScreenshot}
               className="theme-toggle"
