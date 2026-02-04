@@ -11,6 +11,7 @@ import { usePriceAlerts } from '@/hooks/usePriceAlerts';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import Watchlist from '@/components/Watchlist';
 import PriceAlerts from '@/components/PriceAlerts';
+import CompareModal from '@/components/CompareModal';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -26,6 +27,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeIndicators, setActiveIndicators] = useState<string[]>(['sma20', 'bb']);
   const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
+  const [showCompare, setShowCompare] = useState(false);
   
   const { theme, toggleTheme, mounted } = useTheme();
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, mounted: watchlistMounted } = useWatchlist();
@@ -156,16 +158,25 @@ export default function Home() {
             </h1>
             <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">AI-Powered</span>
           </div>
-          {/* Theme Toggle */}
-          {mounted && (
+          {/* Compare & Theme Buttons */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={toggleTheme}
+              onClick={() => setShowCompare(true)}
               className="theme-toggle"
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              title="Compare assets"
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              📊
             </button>
-          )}
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="theme-toggle"
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Asset Selector */}
@@ -460,7 +471,15 @@ export default function Home() {
       <footer className="mt-8 text-center text-sm text-gray-500">
         <p>ChartWise — AI-Powered Technical Analysis</p>
         <p className="mt-1">Data from CoinGecko • Built by 007 🕵️</p>
+        <p className="mt-1 text-xs">Press ? for keyboard shortcuts</p>
       </footer>
+
+      {/* Compare Modal */}
+      <CompareModal
+        isOpen={showCompare}
+        onClose={() => setShowCompare(false)}
+        primaryAsset={selectedAsset}
+      />
     </main>
   );
 }
