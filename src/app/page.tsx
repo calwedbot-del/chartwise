@@ -289,6 +289,19 @@ export default function Home() {
               📷
             </button>
             <button
+              onClick={() => {
+                if (ohlcvData.length > 0) {
+                  import('@/utils/exportData').then(({ exportToCSV }) => {
+                    exportToCSV(ohlcvData, selectedAsset, timeframe);
+                  });
+                }
+              }}
+              className="theme-toggle"
+              title="Export data to CSV"
+            >
+              📥
+            </button>
+            <button
               onClick={() => setShowCompare(true)}
               className="theme-toggle"
               title="Compare assets"
