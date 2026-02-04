@@ -23,7 +23,16 @@ export default function Home() {
   const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
   
   const { theme, toggleTheme, mounted } = useTheme();
+  const [isMobile, setIsMobile] = useState(false);
   const assets = getSupportedAssets();
+  
+  // Detect mobile for responsive chart height
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Fetch data
   useEffect(() => {
@@ -115,7 +124,7 @@ export default function Home() {
         {/* Asset Selector */}
         <div className="mb-4">
           <div className="text-xs text-gray-500 mb-2">CRYPTO</div>
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="asset-scroll flex flex-wrap sm:flex-wrap gap-2 mb-3">
             {assets.filter(a => a.type === 'crypto').map(asset => (
               <button
                 key={asset.symbol}
@@ -131,7 +140,7 @@ export default function Home() {
             ))}
           </div>
           <div className="text-xs text-gray-500 mb-2">STOCKS</div>
-          <div className="flex flex-wrap gap-2">
+          <div className="asset-scroll flex flex-wrap sm:flex-wrap gap-2">
             {assets.filter(a => a.type === 'stock').map(asset => (
               <button
                 key={asset.symbol}
@@ -149,7 +158,7 @@ export default function Home() {
         </div>
         
         {/* Timeframe Selector */}
-        <div className="flex gap-2">
+        <div className="asset-scroll flex gap-2 overflow-x-auto pb-2">
           {TIMEFRAMES.map(tf => (
             <button
               key={tf}
@@ -168,7 +177,7 @@ export default function Home() {
       
       {/* Price Info */}
       {assetInfo && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="price-grid grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-[var(--bg-card)] rounded-lg p-4">
             <div className="text-sm text-[var(--text-secondary)] mb-1">Price</div>
             <div className="text-2xl font-bold">${assetInfo.price.toLocaleString()}</div>
@@ -245,9 +254,9 @@ export default function Home() {
       )}
       
       {/* Chart Type & Indicators Toggle */}
-      <div className="flex flex-wrap items-center gap-4 mb-4">
+      <div className="indicator-scroll flex flex-wrap items-center gap-4 mb-4 overflow-x-auto pb-2">
         {/* Chart Type Selector */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-sm text-[var(--text-secondary)]">Chart:</span>
           {[
             { id: 'candlestick', label: '🕯️', title: 'Candlestick' },
@@ -292,17 +301,19 @@ export default function Home() {
       {/* Main Chart */}
       <div className="mb-6">
         {loading ? (
-          <div className="chart-container h-[500px] flex items-center justify-center">
+          <div className="chart-container h-[350px] sm:h-[500px] flex items-center justify-center">
             <div className="text-[var(--text-secondary)]">Loading chart...</div>
           </div>
         ) : (
-          <Chart 
-            data={ohlcvData} 
-            indicators={indicators}
-            supportResistance={aiAnalysis?.supportResistance || []}
-            height={500}
-            chartType={chartType}
-          />
+          <div className="chart-mobile sm:h-auto">
+            <Chart 
+              data={ohlcvData} 
+              indicators={indicators}
+              supportResistance={aiAnalysis?.supportResistance || []}
+              height={isMobile ? 350 : 500}
+              chartType={chartType}
+            />
+          </div>
         )}
       </div>
       
