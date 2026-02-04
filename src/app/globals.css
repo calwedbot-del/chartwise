@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #131722;
+  --bg-card: #1e222d;
+  --text-primary: #d1d4dc;
+  --text-secondary: #787b86;
+  --bull: #26a69a;
+  --bear: #ef5350;
+  --accent: #2962ff;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #363a45;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #434651;
+}
+
+/* Chart container */
+.chart-container {
+  background: var(--bg-secondary);
+  border: 1px solid #2a2e39;
+  border-radius: 8px;
+}
+
+/* Indicator pills */
+.indicator-pill {
+  @apply px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-all;
+  background: var(--bg-card);
+  border: 1px solid transparent;
+}
+
+.indicator-pill:hover {
+  border-color: var(--accent);
+}
+
+.indicator-pill.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* AI Analysis card */
+.ai-card {
+  background: linear-gradient(135deg, rgba(41, 98, 255, 0.1) 0%, rgba(38, 166, 154, 0.1) 100%);
+  border: 1px solid rgba(41, 98, 255, 0.3);
+  border-radius: 12px;
+}
