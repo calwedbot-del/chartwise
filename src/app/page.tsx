@@ -27,6 +27,7 @@ import MarketHeatmap from '@/components/MarketHeatmap';
 import AssetScreener from '@/components/AssetScreener';
 import EconomicCalendar from '@/components/EconomicCalendar';
 import OverlayComparison from '@/components/OverlayComparison';
+import LivePriceIndicator from '@/components/LivePriceIndicator';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -443,7 +444,13 @@ export default function Home() {
         <div className="price-grid grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-[var(--bg-card)] rounded-lg p-4">
             <div className="text-sm text-[var(--text-secondary)] mb-1">Price</div>
-            <div className="text-2xl font-bold">${assetInfo.price.toLocaleString()}</div>
+            <LivePriceIndicator
+              symbol={selectedAsset}
+              fallbackPrice={assetInfo.price}
+              onPriceUpdate={(price) => {
+                setAssetPrices(prev => ({ ...prev, [selectedAsset]: price }));
+              }}
+            />
           </div>
           <div className="bg-[var(--bg-card)] rounded-lg p-4">
             <div className="text-sm text-[var(--text-secondary)] mb-1">24h Change</div>
