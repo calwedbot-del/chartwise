@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { createChart, ColorType, CrosshairMode, IChartApi } from 'lightweight-charts';
-import { OHLCV, FibonacciLevel } from '@/utils/indicators';
+import { OHLCV, FibonacciLevel, HeikinAshi } from '@/utils/indicators';
 import { SupportResistance } from '@/utils/aiAnalysis';
 
-export type ChartType = 'candlestick' | 'line' | 'area';
+export type ChartType = 'candlestick' | 'line' | 'area' | 'heikinashi';
 
 export interface ChartRef {
   takeScreenshot: () => string | null;
@@ -85,16 +85,18 @@ const Chart = forwardRef<ChartRef, ChartProps>(function Chart({
     // Add main price series based on chart type
     let mainSeries: any;
     
-    if (chartType === 'candlestick') {
+    if (chartType === 'candlestick' || chartType === 'heikinashi') {
+      const displayData = chartType === 'heikinashi' ? HeikinAshi(data) : data;
+      
       mainSeries = chart.addCandlestickSeries({
-        upColor: '#26a69a',
-        downColor: '#ef5350',
-        borderDownColor: '#ef5350',
-        borderUpColor: '#26a69a',
-        wickDownColor: '#ef5350',
-        wickUpColor: '#26a69a',
+        upColor: chartType === 'heikinashi' ? '#00c853' : '#26a69a',
+        downColor: chartType === 'heikinashi' ? '#ff1744' : '#ef5350',
+        borderDownColor: chartType === 'heikinashi' ? '#ff1744' : '#ef5350',
+        borderUpColor: chartType === 'heikinashi' ? '#00c853' : '#26a69a',
+        wickDownColor: chartType === 'heikinashi' ? '#ff1744' : '#ef5350',
+        wickUpColor: chartType === 'heikinashi' ? '#00c853' : '#26a69a',
       });
-      const candleData = data.map(d => ({
+      const candleData = displayData.map(d => ({
         time: d.time,
         open: d.open,
         high: d.high,

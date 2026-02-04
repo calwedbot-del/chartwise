@@ -214,6 +214,150 @@ export function FibonacciRetracement(candles: OHLCV[]): FibonacciLevel[] {
   }));
 }
 
+// Heikin Ashi Candles
+export function HeikinAshi(candles: OHLCV[]): OHLCV[] {
+  if (candles.length === 0) return [];
+  
+  const result: OHLCV[] = [];
+  
+  for (let i = 0; i < candles.length; i++) {
+    const c = candles[i];
+    const haClose = (c.open + c.high + c.low + c.close) / 4;
+    
+    let haOpen: number;
+    if (i === 0) {
+      haOpen = (c.open + c.close) / 2;
+    } else {
+      haOpen = (result[i - 1].open + result[i - 1].close) / 2;
+    }
+    
+    const haHigh = Math.max(c.high, haOpen, haClose);
+    const haLow = Math.min(c.low, haOpen, haClose);
+    
+    result.push({
+      time: c.time,
+      open: haOpen,
+      high: haHigh,
+      low: haLow,
+      close: haClose,
+      volume: c.volume,
+    });
+  }
+  
+  return result;
+}
+
+// Stochastic RSI
+export function StochasticRSI(
+  closes: number[],
+  rsiPeriod: number = 14,
+  stochPeriod: number = 14,
+  kSmoothing: number = 3,
+  dSmoothing: number = 3
+): { k: number[]; d: number[] } {
+  const rsiValues = RSI(closes, rsiPeriod);
+  
+  const stochK: number[] = [];
+  
+  for (let i = 0; i < rsiValues.length; i++) {
+    if (isNaN(rsiValues[i]) || i < rsiPeriod + stochPeriod - 1) {
+      stochK.push(NaN);
+      continue;
+    }
+    
+    const rsiSlice = rsiValues.slice(i - stochPeriod + 1, i + 1).filter(v => !isNaN(v));
+    if (rsiSlice.length < stochPeriod) {
+      stochK.push(NaN);
+      continue;
+    }
+    
+    const minRSI = Math.min(...rsiSlice);
+    const maxRSI = Math.max(...rsiSlice);
+    
+    if (maxRSI === minRSI) {
+      stochK.push(50);
+    } else {
+      stochK.push(((rsiValues[i] - minRSI) / (maxRSI - minRSI)) * 100);
+    }
+  }
+  
+  // Smooth K with SMA
+  const k = SMA(stochK.map(v => isNaN(v) ? 0 : v), kSmoothing);
+  // Re-apply NaN mask
+  for (let i = 0; i < stochK.length; i++) {
+    if (isNaN(stochK[i])) k[i] = NaN;
+  }
+  
+  // D is SMA of K
+  const d = SMA(k.map(v => isNaN(v) ? 0 : v), dSmoothing);
+  for (let i = 0; i < k.length; i++) {
+    if (isNaN(k[i])) d[i] = NaN;
+  }
+  
+  return { k, d };
+}
+
+// Average True Range (ATR)
+export function ATR(candles: OHLCV[], period: number = 14): number[] {
+  if (candles.length === 0) return [];
+  
+  const trueRanges: number[] = [];
+  
+  for (let i = 0; i < candles.length; i++) {
+    if (i === 0) {
+      trueRanges.push(candles[i].high - candles[i].low);
+    } else {
+      const tr = Math.max(
+        candles[i].high - candles[i].low,
+        Math.abs(candles[i].high - candles[i - 1].close),
+        Math.abs(candles[i].low - candles[i - 1].close)
+      );
+      trueRanges.push(tr);
+    }
+  }
+  
+  const result: number[] = [];
+  
+  for (let i = 0; i < trueRanges.length; i++) {
+    if (i < period - 1) {
+      result.push(NaN);
+      continue;
+    }
+    
+    if (i === period - 1) {
+      // First ATR is simple average
+      const sum = trueRanges.slice(0, period).reduce((a, b) => a + b, 0);
+      result.push(sum / period);
+    } else {
+      // Subsequent ATR uses smoothing
+      result.push((result[i - 1] * (period - 1) + trueRanges[i]) / period);
+    }
+  }
+  
+  return result;
+}
+
+// On-Balance Volume (OBV)
+export function OBV(candles: OHLCV[]): number[] {
+  if (candles.length === 0) return [];
+  
+  const result: number[] = [candles[0].volume || 0];
+  
+  for (let i = 1; i < candles.length; i++) {
+    const volume = candles[i].volume || 0;
+    
+    if (candles[i].close > candles[i - 1].close) {
+      result.push(result[i - 1] + volume);
+    } else if (candles[i].close < candles[i - 1].close) {
+      result.push(result[i - 1] - volume);
+    } else {
+      result.push(result[i - 1]);
+    }
+  }
+  
+  return result;
+}
+
 // Fibonacci Extension Levels (for price targets)
 export function FibonacciExtension(candles: OHLCV[]): FibonacciLevel[] {
   if (candles.length === 0) return [];

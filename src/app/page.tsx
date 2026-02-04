@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ChartRef } from '@/components/Chart';
 import dynamic from 'next/dynamic';
 import { fetchCryptoOHLCV, fetchAssetInfo, getSupportedAssets, AssetInfo, fetchStockOHLCV, fetchStockInfo } from '@/lib/api';
-import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands, FibonacciRetracement, FibonacciLevel, VWAP } from '@/utils/indicators';
+import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands, FibonacciRetracement, FibonacciLevel, VWAP, StochasticRSI, ATR, OBV } from '@/utils/indicators';
 import { runAIAnalysis, AIAnalysis } from '@/utils/aiAnalysis';
 import { useTheme } from '@/hooks/useTheme';
 import { useWatchlist } from '@/hooks/useWatchlist';
@@ -46,7 +46,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeIndicators, setActiveIndicators] = useState<string[]>(['sma20', 'bb']);
-  const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
+  const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area' | 'heikinashi'>('candlestick');
   const [showCompare, setShowCompare] = useState(false);
   const [showMultiChart, setShowMultiChart] = useState(false);
   const chartRef = useRef<ChartRef>(null);
@@ -80,8 +80,8 @@ export default function Home() {
     if (assetParam) setSelectedAsset(assetParam);
     if (tfParam && TIMEFRAMES.includes(tfParam)) setTimeframe(tfParam);
     if (indParam) setActiveIndicators(indParam.split(',').filter(Boolean));
-    if (typeParam && ['candlestick', 'line', 'area'].includes(typeParam)) {
-      setChartType(typeParam as 'candlestick' | 'line' | 'area');
+    if (typeParam && ['candlestick', 'line', 'area', 'heikinashi'].includes(typeParam)) {
+      setChartType(typeParam as 'candlestick' | 'line' | 'area' | 'heikinashi');
     }
   }, []);
   
@@ -607,6 +607,7 @@ export default function Home() {
           <span className="text-sm text-[var(--text-secondary)]">Chart:</span>
           {[
             { id: 'candlestick', label: '🕯️', title: 'Candlestick' },
+            { id: 'heikinashi', label: '🔥', title: 'Heikin Ashi' },
             { id: 'line', label: '📈', title: 'Line' },
             { id: 'area', label: '📊', title: 'Area' },
           ].map(type => (
