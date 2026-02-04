@@ -25,6 +25,7 @@ import VolumeProfile from '@/components/VolumeProfile';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
+const IndicatorChart = dynamic(() => import('@/components/IndicatorChart'), { ssr: false });
 
 const TIMEFRAMES = ['1d', '7d', '14d', '30d', '90d', '180d', '365d'];
 const TIMEFRAME_LABELS: Record<string, string> = {
@@ -637,6 +638,9 @@ export default function Home() {
           { id: 'bb', label: 'Bollinger' },
           { id: 'vwap', label: 'VWAP' },
           { id: 'fib', label: 'Fibonacci' },
+          { id: 'stochRsi', label: 'Stoch RSI' },
+          { id: 'atr', label: 'ATR' },
+          { id: 'obv', label: 'OBV' },
         ].map(ind => (
           <button
             key={ind.id}
@@ -666,6 +670,46 @@ export default function Home() {
               chartType={chartType}
             />
           </div>
+        )}
+
+        {/* Sub-chart Indicators */}
+        {!loading && ohlcvData.length > 20 && (
+          <>
+            {activeIndicators.includes('stochRsi') && (() => {
+              const stochData = StochasticRSI(ohlcvData.map(d => d.close));
+              return (
+                <IndicatorChart
+                  type="stochRsi"
+                  data={ohlcvData}
+                  stochK={stochData.k}
+                  stochD={stochData.d}
+                  height={isMobile ? 120 : 150}
+                />
+              );
+            })()}
+            {activeIndicators.includes('atr') && (() => {
+              const atrData = ATR(ohlcvData);
+              return (
+                <IndicatorChart
+                  type="atr"
+                  data={ohlcvData}
+                  atrValues={atrData}
+                  height={isMobile ? 120 : 150}
+                />
+              );
+            })()}
+            {activeIndicators.includes('obv') && (() => {
+              const obvData = OBV(ohlcvData);
+              return (
+                <IndicatorChart
+                  type="obv"
+                  data={ohlcvData}
+                  obvValues={obvData}
+                  height={isMobile ? 120 : 150}
+                />
+              );
+            })()}
+          </>
         )}
       </div>
       
