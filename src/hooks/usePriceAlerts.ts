@@ -11,13 +11,24 @@ export interface PriceAlert {
   triggered: boolean;
 }
 
+export interface AlertHistoryItem {
+  id: string;
+  symbol: string;
+  targetPrice: number;
+  condition: 'above' | 'below';
+  triggeredAt: number;
+  priceAtTrigger: number;
+}
+
 export function usePriceAlerts() {
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const stored = localStorage.getItem('chartwise-alerts');
+    const storedHistory = localStorage.getItem('chartwise-alert-history');
     if (stored) {
       try {
         setAlerts(JSON.parse(stored));
@@ -25,11 +36,23 @@ export function usePriceAlerts() {
         setAlerts([]);
       }
     }
+    if (storedHistory) {
+      try {
+        setAlertHistory(JSON.parse(storedHistory));
+      } catch {
+        setAlertHistory([]);
+      }
+    }
   }, []);
 
   const saveAlerts = (newAlerts: PriceAlert[]) => {
     setAlerts(newAlerts);
     localStorage.setItem('chartwise-alerts', JSON.stringify(newAlerts));
+  };
+
+  const saveHistory = (newHistory: AlertHistoryItem[]) => {
+    setAlertHistory(newHistory);
+    localStorage.setItem('chartwise-alert-history', JSON.stringify(newHistory));
   };
 
   const addAlert = useCallback((symbol: string, targetPrice: number, condition: 'above' | 'below') => {
@@ -53,6 +76,7 @@ export function usePriceAlerts() {
 
   const checkAlerts = useCallback((symbol: string, currentPrice: number) => {
     const triggeredAlerts: PriceAlert[] = [];
+    const newHistoryItems: AlertHistoryItem[] = [];
     
     const updated = alerts.map(alert => {
       if (alert.symbol !== symbol || alert.triggered) return alert;
@@ -63,6 +87,15 @@ export function usePriceAlerts() {
       
       if (shouldTrigger) {
         triggeredAlerts.push(alert);
+        // Add to history
+        newHistoryItems.push({
+          id: `hist-${alert.id}`,
+          symbol: alert.symbol,
+          targetPrice: alert.targetPrice,
+          condition: alert.condition,
+          triggeredAt: Date.now(),
+          priceAtTrigger: currentPrice,
+        });
         return { ...alert, triggered: true };
       }
       return alert;
@@ -70,6 +103,9 @@ export function usePriceAlerts() {
     
     if (triggeredAlerts.length > 0) {
       saveAlerts(updated);
+      // Save to history (keep last 50)
+      const updatedHistory = [...newHistoryItems, ...alertHistory].slice(0, 50);
+      saveHistory(updatedHistory);
       // Show browser notification if permitted
       triggeredAlerts.forEach(alert => {
         if (Notification.permission === 'granted') {
@@ -82,7 +118,7 @@ export function usePriceAlerts() {
     }
     
     return triggeredAlerts;
-  }, [alerts]);
+  }, [alerts, alertHistory]);
 
   const requestNotificationPermission = useCallback(async () => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -99,13 +135,26 @@ export function usePriceAlerts() {
     saveAlerts(updated);
   }, [alerts]);
 
+  const clearAlertHistory = useCallback(() => {
+    saveHistory([]);
+  }, []);
+
+  const getAlertHistory = useCallback((symbol?: string) => {
+    return symbol 
+      ? alertHistory.filter(h => h.symbol === symbol)
+      : alertHistory;
+  }, [alertHistory]);
+
   return {
     alerts,
+    alertHistory,
     addAlert,
     removeAlert,
     checkAlerts,
     getActiveAlerts,
+    getAlertHistory,
     clearTriggeredAlerts,
+    clearAlertHistory,
     requestNotificationPermission,
     mounted
   };

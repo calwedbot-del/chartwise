@@ -17,6 +17,7 @@ import CompareModal from '@/components/CompareModal';
 import Portfolio from '@/components/Portfolio';
 import AssetSearch from '@/components/AssetSearch';
 import NewsFeed from '@/components/NewsFeed';
+import AlertHistory from '@/components/AlertHistory';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -47,7 +48,7 @@ export default function Home() {
   
   const { theme, toggleTheme, mounted } = useTheme();
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, mounted: watchlistMounted } = useWatchlist();
-  const { alerts, addAlert, removeAlert, checkAlerts, requestNotificationPermission, mounted: alertsMounted } = usePriceAlerts();
+  const { alerts, alertHistory, addAlert, removeAlert, checkAlerts, clearAlertHistory, requestNotificationPermission, mounted: alertsMounted } = usePriceAlerts();
   const { holdings, addHolding, removeHolding, getTotalValue, getTotalCost, getHoldingsWithPrices, mounted: portfolioMounted } = usePortfolio();
   const [isMobile, setIsMobile] = useState(false);
   const [assetPrices, setAssetPrices] = useState<Record<string, number>>({});
@@ -441,6 +442,15 @@ export default function Home() {
             onRequestPermission={requestNotificationPermission}
           />
         </div>
+      )}
+
+      {/* Alert History */}
+      {alertsMounted && alertHistory.length > 0 && (
+        <AlertHistory
+          history={alertHistory}
+          onClearHistory={clearAlertHistory}
+          onSelectSymbol={setSelectedAsset}
+        />
       )}
 
       {/* Portfolio Tracker */}
