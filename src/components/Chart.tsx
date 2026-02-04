@@ -19,6 +19,7 @@ interface ChartProps {
   };
   height?: number;
   chartType?: ChartType;
+  showVolume?: boolean;
 }
 
 export default function Chart({ 
@@ -26,7 +27,8 @@ export default function Chart({
   supportResistance = [],
   indicators,
   height = 500,
-  chartType = 'candlestick'
+  chartType = 'candlestick',
+  showVolume = true
 }: ChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   
@@ -100,6 +102,32 @@ export default function Chart({
         value: d.close,
       }));
       mainSeries.setData(areaData as any);
+    }
+    
+    // Add volume histogram
+    if (showVolume && data.some(d => d.volume)) {
+      const volumeSeries = chart.addHistogramSeries({
+        color: '#26a69a',
+        priceFormat: {
+          type: 'volume',
+        },
+        priceScaleId: 'volume',
+      });
+      
+      chart.priceScale('volume').applyOptions({
+        scaleMargins: {
+          top: 0.8,
+          bottom: 0,
+        },
+      });
+      
+      const volumeData = data.map((d, i) => ({
+        time: d.time,
+        value: d.volume || 0,
+        color: d.close >= d.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
+      }));
+      
+      volumeSeries.setData(volumeData as any);
     }
     
     // Add indicator lines
@@ -190,7 +218,7 @@ export default function Chart({
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [data, supportResistance, indicators, height, chartType]);
+  }, [data, supportResistance, indicators, height, chartType, showVolume]);
   
   return (
     <div className="chart-container p-1">
