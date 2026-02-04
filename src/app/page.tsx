@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { fetchCryptoOHLCV, fetchAssetInfo, getSupportedAssets, AssetInfo, fetchStockOHLCV, fetchStockInfo } from '@/lib/api';
 import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands } from '@/utils/indicators';
 import { runAIAnalysis, AIAnalysis } from '@/utils/aiAnalysis';
+import { useTheme } from '@/hooks/useTheme';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -21,6 +22,7 @@ export default function Home() {
   const [activeIndicators, setActiveIndicators] = useState<string[]>(['sma20', 'bb']);
   const [chartType, setChartType] = useState<'candlestick' | 'line' | 'area'>('candlestick');
   
+  const { theme, toggleTheme, mounted } = useTheme();
   const assets = getSupportedAssets();
   
   // Fetch data
@@ -98,6 +100,16 @@ export default function Home() {
             </h1>
             <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">AI-Powered</span>
           </div>
+          {/* Theme Toggle */}
+          {mounted && (
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+          )}
         </div>
         
         {/* Asset Selector */}
@@ -111,7 +123,7 @@ export default function Home() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   selectedAsset === asset.symbol
                     ? 'bg-blue-500 text-white'
-                    : 'bg-[#1e222d] text-gray-400 hover:bg-[#2a2e39]'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
                 }`}
               >
                 {asset.symbol}
@@ -127,7 +139,7 @@ export default function Home() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   selectedAsset === asset.symbol
                     ? 'bg-green-500 text-white'
-                    : 'bg-[#1e222d] text-gray-400 hover:bg-[#2a2e39]'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
                 }`}
               >
                 {asset.symbol}
@@ -145,7 +157,7 @@ export default function Home() {
               className={`px-3 py-1 rounded text-sm transition-all ${
                 timeframe === tf
                   ? 'bg-[#2962ff] text-white'
-                  : 'bg-[#1e222d] text-gray-400 hover:bg-[#2a2e39]'
+                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               {tf}
@@ -157,22 +169,22 @@ export default function Home() {
       {/* Price Info */}
       {assetInfo && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-[#1e222d] rounded-lg p-4">
-            <div className="text-sm text-gray-400 mb-1">Price</div>
+          <div className="bg-[var(--bg-card)] rounded-lg p-4">
+            <div className="text-sm text-[var(--text-secondary)] mb-1">Price</div>
             <div className="text-2xl font-bold">${assetInfo.price.toLocaleString()}</div>
           </div>
-          <div className="bg-[#1e222d] rounded-lg p-4">
-            <div className="text-sm text-gray-400 mb-1">24h Change</div>
+          <div className="bg-[var(--bg-card)] rounded-lg p-4">
+            <div className="text-sm text-[var(--text-secondary)] mb-1">24h Change</div>
             <div className={`text-2xl font-bold ${assetInfo.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {assetInfo.change24h >= 0 ? '+' : ''}{assetInfo.change24h.toFixed(2)}%
             </div>
           </div>
-          <div className="bg-[#1e222d] rounded-lg p-4">
-            <div className="text-sm text-gray-400 mb-1">24h High</div>
+          <div className="bg-[var(--bg-card)] rounded-lg p-4">
+            <div className="text-sm text-[var(--text-secondary)] mb-1">24h High</div>
             <div className="text-xl font-medium">${assetInfo.high24h.toLocaleString()}</div>
           </div>
-          <div className="bg-[#1e222d] rounded-lg p-4">
-            <div className="text-sm text-gray-400 mb-1">24h Low</div>
+          <div className="bg-[var(--bg-card)] rounded-lg p-4">
+            <div className="text-sm text-[var(--text-secondary)] mb-1">24h Low</div>
             <div className="text-xl font-medium">${assetInfo.low24h.toLocaleString()}</div>
           </div>
         </div>
@@ -187,7 +199,7 @@ export default function Home() {
             <span className={`ml-auto px-3 py-1 rounded-full text-sm font-medium ${
               aiAnalysis.trend === 'bullish' ? 'bg-green-500/20 text-green-400' :
               aiAnalysis.trend === 'bearish' ? 'bg-red-500/20 text-red-400' :
-              'bg-gray-500/20 text-gray-400'
+              'bg-gray-500/20 text-[var(--text-secondary)]'
             }`}>
               {aiAnalysis.trend.toUpperCase()} ({aiAnalysis.trendStrength}%)
             </span>
@@ -204,7 +216,7 @@ export default function Home() {
                     sr.type === 'support' ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'
                   }`}
                 >
-                  <div className="text-xs text-gray-400 uppercase">{sr.type}</div>
+                  <div className="text-xs text-[var(--text-secondary)] uppercase">{sr.type}</div>
                   <div className="font-medium">${sr.price.toFixed(2)}</div>
                   <div className="text-xs text-gray-500">{sr.touches} touches</div>
                 </div>
@@ -221,7 +233,7 @@ export default function Home() {
                   className={`px-3 py-1 rounded-full text-sm ${
                     pattern.type === 'bullish' ? 'bg-green-500/20 text-green-400' :
                     pattern.type === 'bearish' ? 'bg-red-500/20 text-red-400' :
-                    'bg-gray-500/20 text-gray-400'
+                    'bg-gray-500/20 text-[var(--text-secondary)]'
                   }`}
                 >
                   {pattern.name} ({pattern.confidence}%)
@@ -236,7 +248,7 @@ export default function Home() {
       <div className="flex flex-wrap items-center gap-4 mb-4">
         {/* Chart Type Selector */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Chart:</span>
+          <span className="text-sm text-[var(--text-secondary)]">Chart:</span>
           {[
             { id: 'candlestick', label: '🕯️', title: 'Candlestick' },
             { id: 'line', label: '📈', title: 'Line' },
@@ -249,7 +261,7 @@ export default function Home() {
               className={`px-3 py-1 rounded text-lg transition-all ${
                 chartType === type.id
                   ? 'bg-[#2962ff] text-white'
-                  : 'bg-[#1e222d] text-gray-400 hover:bg-[#2a2e39]'
+                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               {type.label}
@@ -260,7 +272,7 @@ export default function Home() {
         <div className="w-px h-6 bg-gray-600" />
         
         {/* Indicators */}
-        <span className="text-sm text-gray-400">Indicators:</span>
+        <span className="text-sm text-[var(--text-secondary)]">Indicators:</span>
         {[
           { id: 'sma20', label: 'SMA 20' },
           { id: 'sma50', label: 'SMA 50' },
@@ -281,7 +293,7 @@ export default function Home() {
       <div className="mb-6">
         {loading ? (
           <div className="chart-container h-[500px] flex items-center justify-center">
-            <div className="text-gray-400">Loading chart...</div>
+            <div className="text-[var(--text-secondary)]">Loading chart...</div>
           </div>
         ) : (
           <Chart 
@@ -296,8 +308,8 @@ export default function Home() {
       
       {/* Technical Indicators Panel */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#1e222d] rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">RSI (14)</div>
+        <div className="bg-[var(--bg-card)] rounded-lg p-4">
+          <div className="text-sm text-[var(--text-secondary)] mb-1">RSI (14)</div>
           <div className={`text-2xl font-bold ${
             currentRSI > 70 ? 'text-red-400' : currentRSI < 30 ? 'text-green-400' : 'text-gray-200'
           }`}>
@@ -308,8 +320,8 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="bg-[#1e222d] rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">MACD</div>
+        <div className="bg-[var(--bg-card)] rounded-lg p-4">
+          <div className="text-sm text-[var(--text-secondary)] mb-1">MACD</div>
           <div className={`text-2xl font-bold ${
             currentMACD > 0 ? 'text-green-400' : 'text-red-400'
           }`}>
@@ -320,15 +332,15 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="bg-[#1e222d] rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Volume (24h)</div>
+        <div className="bg-[var(--bg-card)] rounded-lg p-4">
+          <div className="text-sm text-[var(--text-secondary)] mb-1">Volume (24h)</div>
           <div className="text-2xl font-bold">
             ${assetInfo?.volume24h ? (assetInfo.volume24h / 1e9).toFixed(2) + 'B' : '—'}
           </div>
         </div>
         
-        <div className="bg-[#1e222d] rounded-lg p-4">
-          <div className="text-sm text-gray-400 mb-1">Market Cap</div>
+        <div className="bg-[var(--bg-card)] rounded-lg p-4">
+          <div className="text-sm text-[var(--text-secondary)] mb-1">Market Cap</div>
           <div className="text-2xl font-bold">
             ${assetInfo?.marketCap ? (assetInfo.marketCap / 1e9).toFixed(0) + 'B' : '—'}
           </div>
