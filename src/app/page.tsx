@@ -48,6 +48,8 @@ import ChartAnnotations, { useAnnotations } from '@/components/ChartAnnotations'
 import AlertConditionsBuilder from '@/components/AlertConditionsBuilder';
 import NewsSentiment from '@/components/NewsSentiment';
 import PerformanceDashboard from '@/components/PerformanceDashboard';
+import WhaleTracker from '@/components/WhaleTracker';
+import CustomIndicatorBuilder from '@/components/CustomIndicatorBuilder';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -606,19 +608,26 @@ export default function Home() {
         </>
       )}
 
-      {/* Trade Tape, Open Interest & Long/Short Ratio for crypto */}
+      {/* Trade Tape, Open Interest, Long/Short Ratio & Whale Tracker for crypto */}
       {assets.find(a => a.symbol === selectedAsset)?.type === 'crypto' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-          <ErrorBoundary componentName="Trade Tape">
-            <TradeTape symbol={selectedAsset} />
-          </ErrorBoundary>
-          <ErrorBoundary componentName="Open Interest">
-            <OpenInterest symbol={selectedAsset} />
-          </ErrorBoundary>
-          <ErrorBoundary componentName="Long/Short Ratio">
-            <LongShortRatio symbol={selectedAsset} />
-          </ErrorBoundary>
-        </div>
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <ErrorBoundary componentName="Trade Tape">
+              <TradeTape symbol={selectedAsset} />
+            </ErrorBoundary>
+            <ErrorBoundary componentName="Open Interest">
+              <OpenInterest symbol={selectedAsset} />
+            </ErrorBoundary>
+            <ErrorBoundary componentName="Long/Short Ratio">
+              <LongShortRatio symbol={selectedAsset} />
+            </ErrorBoundary>
+          </div>
+          <div className="mb-6">
+            <ErrorBoundary componentName="Whale Tracker">
+              <WhaleTracker symbol={selectedAsset} />
+            </ErrorBoundary>
+          </div>
+        </>
       )}
 
       {/* Portfolio Tracker */}
@@ -771,6 +780,15 @@ export default function Home() {
       <ErrorBoundary componentName="Economic Calendar">
         <EconomicCalendar />
       </ErrorBoundary>
+
+      {/* Custom Indicator Builder */}
+      {ohlcvData.length > 20 && (
+        <div className="mb-6">
+          <ErrorBoundary componentName="Custom Indicators">
+            <CustomIndicatorBuilder data={ohlcvData} symbol={selectedAsset} />
+          </ErrorBoundary>
+        </div>
+      )}
 
       {/* Strategy Backtester */}
       <ErrorBoundary componentName="Strategy Backtester">
