@@ -107,21 +107,23 @@ export function usePriceAlerts() {
       const updatedHistory = [...newHistoryItems, ...alertHistory].slice(0, 50);
       saveHistory(updatedHistory);
       // Show browser notification if permitted
-      triggeredAlerts.forEach(alert => {
-        if (Notification.permission === 'granted') {
-          new Notification(`ChartWise Alert: ${alert.symbol}`, {
-            body: `Price ${alert.condition === 'above' ? 'rose above' : 'fell below'} $${alert.targetPrice.toLocaleString()}`,
-            icon: '/favicon.ico'
-          });
-        }
-      });
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        triggeredAlerts.forEach(alert => {
+          if (Notification.permission === 'granted') {
+            new Notification(`ChartWise Alert: ${alert.symbol}`, {
+              body: `Price ${alert.condition === 'above' ? 'rose above' : 'fell below'} $${alert.targetPrice.toLocaleString()}`,
+              icon: '/favicon.ico'
+            });
+          }
+        });
+      }
     }
     
     return triggeredAlerts;
   }, [alerts, alertHistory]);
 
   const requestNotificationPermission = useCallback(async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       await Notification.requestPermission();
     }
   }, []);
