@@ -31,6 +31,8 @@ import LivePriceIndicator from '@/components/LivePriceIndicator';
 import FundingRate from '@/components/FundingRate';
 import LiquidationLevels from '@/components/LiquidationLevels';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import TradeTape from '@/components/TradeTape';
+import ChartTemplates from '@/components/ChartTemplates';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -270,7 +272,7 @@ export default function Home() {
   });
   
   return (
-    <main className="min-h-screen p-4 md:p-6">
+    <main id="main-content" className="min-h-screen p-4 md:p-6" role="main">
       {/* Header */}
       <header className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -360,6 +362,20 @@ export default function Home() {
             >
               ⊞
             </button>
+            <ChartTemplates
+              currentConfig={{
+                asset: selectedAsset,
+                timeframe,
+                chartType,
+                indicators: activeIndicators,
+              }}
+              onLoadTemplate={(config) => {
+                setSelectedAsset(config.asset);
+                setTimeframe(config.timeframe);
+                setChartType(config.chartType);
+                setActiveIndicators(config.indicators);
+              }}
+            />
             {mounted && (
               <button
                 onClick={toggleTheme}
@@ -535,6 +551,15 @@ export default function Home() {
           </ErrorBoundary>
           <ErrorBoundary componentName="Liquidation Levels">
             <LiquidationLevels symbol={selectedAsset} currentPrice={assetInfo.price} />
+          </ErrorBoundary>
+        </div>
+      )}
+
+      {/* Trade Tape for crypto */}
+      {assets.find(a => a.symbol === selectedAsset)?.type === 'crypto' && (
+        <div className="mb-6">
+          <ErrorBoundary componentName="Trade Tape">
+            <TradeTape symbol={selectedAsset} />
           </ErrorBoundary>
         </div>
       )}
