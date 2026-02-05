@@ -33,6 +33,7 @@ import LiquidationLevels from '@/components/LiquidationLevels';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import TradeTape from '@/components/TradeTape';
 import ChartTemplates from '@/components/ChartTemplates';
+import ShareButton from '@/components/ShareButton';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -285,28 +286,13 @@ export default function Home() {
           </div>
           {/* Tools: Share, Screenshot, Compare, Theme */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={async () => {
-                const url = `${window.location.origin}?asset=${selectedAsset}&tf=${timeframe}&ind=${activeIndicators.join(',')}&type=${chartType}`;
-                try {
-                  await navigator.clipboard.writeText(url);
-                  alert('Chart link copied to clipboard!');
-                } catch {
-                  prompt('Copy this link:', url);
-                }
-              }}
-              className="theme-toggle"
-              title="Copy shareable link"
-            >
-              🔗
-            </button>
-            <button
-              onClick={handleScreenshot}
-              className="theme-toggle"
-              title="Download chart screenshot"
-            >
-              📷
-            </button>
+            <ShareButton
+              symbol={selectedAsset}
+              timeframe={timeframe}
+              chartType={chartType}
+              indicators={activeIndicators}
+              onGetScreenshot={() => chartRef.current?.takeScreenshot() || null}
+            />
             <button
               onClick={() => {
                 if (ohlcvData.length > 0) {

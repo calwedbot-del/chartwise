@@ -86,23 +86,48 @@ export function useKeyboardShortcuts({
       onToggleIndicator?.('fib');
     }
 
+    // 7 for Ichimoku
+    if (e.key === '7') {
+      e.preventDefault();
+      onToggleIndicator?.('ichimoku');
+    }
+    // 8 for Stoch RSI
+    if (e.key === '8') {
+      e.preventDefault();
+      onToggleIndicator?.('stochRsi');
+    }
+    // 9 for ATR
+    if (e.key === '9') {
+      e.preventDefault();
+      onToggleIndicator?.('atr');
+    }
+    // 0 for OBV
+    if (e.key === '0') {
+      e.preventDefault();
+      onToggleIndicator?.('obv');
+    }
+
     // ? for help
     if (e.key === '?') {
       e.preventDefault();
       alert(`ChartWise Keyboard Shortcuts:
 
+Navigation:
 ← / → : Previous / Next asset
 Shift + ← / → : Previous / Next timeframe
 T : Toggle dark/light theme
 S : Add/remove from watchlist
 
-Indicators:
-1 : Toggle SMA 20
-2 : Toggle SMA 50
-3 : Toggle EMA 12/26
-4 : Toggle Bollinger Bands
-5 : Toggle VWAP
-6 : Toggle Fibonacci`);
+Overlay Indicators:
+1 : SMA 20      5 : VWAP
+2 : SMA 50      6 : Fibonacci
+3 : EMA 12/26   7 : Ichimoku Cloud
+4 : Bollinger
+
+Sub-Chart Indicators:
+8 : Stochastic RSI
+9 : ATR
+0 : OBV`);
     }
   }, [onNextAsset, onPrevAsset, onToggleTheme, onToggleWatchlist, onNextTimeframe, onPrevTimeframe, onToggleIndicator]);
 
