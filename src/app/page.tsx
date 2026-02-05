@@ -38,6 +38,7 @@ import FearGreedIndex from '@/components/FearGreedIndex';
 import QuickStats from '@/components/QuickStats';
 import CryptoDominance from '@/components/CryptoDominance';
 import PricePerformance from '@/components/PricePerformance';
+import OpenInterest from '@/components/OpenInterest';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -557,11 +558,14 @@ export default function Home() {
         </>
       )}
 
-      {/* Trade Tape for crypto */}
+      {/* Trade Tape & Open Interest for crypto */}
       {assets.find(a => a.symbol === selectedAsset)?.type === 'crypto' && (
-        <div className="mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           <ErrorBoundary componentName="Trade Tape">
             <TradeTape symbol={selectedAsset} />
+          </ErrorBoundary>
+          <ErrorBoundary componentName="Open Interest">
+            <OpenInterest symbol={selectedAsset} />
           </ErrorBoundary>
         </div>
       )}
