@@ -57,6 +57,12 @@ const ChartAnnotations = dynamic(() => import('@/components/ChartAnnotations'), 
 const AlertConditionsBuilder = dynamic(() => import('@/components/AlertConditionsBuilder'), { ssr: false });
 const PerformanceDashboard = dynamic(() => import('@/components/PerformanceDashboard'), { ssr: false });
 const CustomIndicatorBuilder = dynamic(() => import('@/components/CustomIndicatorBuilder'), { ssr: false });
+const DeFiDashboard = dynamic(() => import('@/components/DeFiDashboard'), { ssr: false });
+const OptionsFlow = dynamic(() => import('@/components/OptionsFlow'), { ssr: false });
+const AITradeSignals = dynamic(() => import('@/components/AITradeSignals'), { ssr: false });
+const RegimeDetector = dynamic(() => import('@/components/RegimeDetector'), { ssr: false });
+const MarketBreadth = dynamic(() => import('@/components/MarketBreadth'), { ssr: false });
+const OrderbookDepth = dynamic(() => import('@/components/OrderbookDepth'), { ssr: false });
 
 const TIMEFRAMES = ['1d', '7d', '14d', '30d', '90d', '180d', '365d'];
 const TIMEFRAME_LABELS: Record<string, string> = {
@@ -754,6 +760,40 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {/* AI Trade Signals & Regime Detection */}
+      {ohlcvData.length > 50 && assetInfo && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <ErrorBoundary componentName="AI Trade Signals">
+            <AITradeSignals data={ohlcvData} symbol={selectedAsset} currentPrice={assetInfo.price} />
+          </ErrorBoundary>
+          <ErrorBoundary componentName="Regime Detector">
+            <RegimeDetector data={ohlcvData} symbol={selectedAsset} />
+          </ErrorBoundary>
+        </div>
+      )}
+
+      {/* Options Flow & Orderbook Depth (crypto only) */}
+      {assets.find(a => a.symbol === selectedAsset)?.type === 'crypto' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <ErrorBoundary componentName="Options Flow">
+            <OptionsFlow symbol={selectedAsset} />
+          </ErrorBoundary>
+          <ErrorBoundary componentName="Orderbook Depth">
+            <OrderbookDepth symbol={selectedAsset} />
+          </ErrorBoundary>
+        </div>
+      )}
+
+      {/* DeFi Dashboard & Market Breadth */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <ErrorBoundary componentName="DeFi Dashboard">
+          <DeFiDashboard />
+        </ErrorBoundary>
+        <ErrorBoundary componentName="Market Breadth">
+          <MarketBreadth />
+        </ErrorBoundary>
+      </div>
 
       {/* Crypto Dominance, Price Performance & Correlation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
