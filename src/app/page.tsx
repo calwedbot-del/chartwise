@@ -46,6 +46,8 @@ import DivergenceDetector from '@/components/DivergenceDetector';
 import MultiTimeframe from '@/components/MultiTimeframe';
 import ChartAnnotations, { useAnnotations } from '@/components/ChartAnnotations';
 import AlertConditionsBuilder from '@/components/AlertConditionsBuilder';
+import NewsSentiment from '@/components/NewsSentiment';
+import PerformanceDashboard from '@/components/PerformanceDashboard';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -621,15 +623,28 @@ export default function Home() {
 
       {/* Portfolio Tracker */}
       {portfolioMounted && (
-        <Portfolio
-          holdings={getHoldingsWithPrices(assetPrices)}
-          totalValue={getTotalValue(assetPrices)}
-          totalCost={getTotalCost()}
-          onAdd={addHolding}
-          onRemove={removeHolding}
-          onSelectAsset={setSelectedAsset}
-          availableSymbols={assets.map(a => a.symbol)}
-        />
+        <>
+          <Portfolio
+            holdings={getHoldingsWithPrices(assetPrices)}
+            totalValue={getTotalValue(assetPrices)}
+            totalCost={getTotalCost()}
+            onAdd={addHolding}
+            onRemove={removeHolding}
+            onSelectAsset={setSelectedAsset}
+            availableSymbols={assets.map(a => a.symbol)}
+          />
+          {holdings.length > 0 && (
+            <div className="mb-6">
+              <ErrorBoundary componentName="Performance Dashboard">
+                <PerformanceDashboard
+                  holdings={getHoldingsWithPrices(assetPrices)}
+                  totalValue={getTotalValue(assetPrices)}
+                  totalCost={getTotalCost()}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+        </>
       )}
       
       {/* AI Analysis Card */}
@@ -787,9 +802,12 @@ export default function Home() {
         </ErrorBoundary>
       </div>
 
-      {/* News Feed & Trading Journal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      {/* News Feed, Sentiment & Trading Journal */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <NewsFeed symbol={selectedAsset} />
+        <ErrorBoundary componentName="News Sentiment">
+          <NewsSentiment symbol={selectedAsset} />
+        </ErrorBoundary>
         <TradingJournal symbol={selectedAsset} currentPrice={assetInfo?.price || 0} />
       </div>
       
