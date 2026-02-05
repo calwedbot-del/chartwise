@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { createChart, ColorType, CrosshairMode, IChartApi, ISeriesApi } from 'lightweight-charts';
-import { OHLCV, FibonacciLevel, HeikinAshi } from '@/utils/indicators';
+import { OHLCV, FibonacciLevel, HeikinAshi, IchimokuData } from '@/utils/indicators';
 import { SupportResistance } from '@/utils/aiAnalysis';
 import { Drawing, DrawingTool } from '@/components/DrawingTools';
 
@@ -22,6 +22,7 @@ interface ChartProps {
     ema26?: number[];
     bb?: { upper: number[]; middle: number[]; lower: number[] };
     vwap?: number[];
+    ichimoku?: IchimokuData;
   };
   fibonacciLevels?: FibonacciLevel[];
   height?: number;
@@ -246,6 +247,111 @@ const Chart = forwardRef<ChartRef, ChartProps>(function Chart({
       vwapSeries.setData(vwapData as any);
     }
     
+    // Add EMA lines
+    if (indicators?.ema12) {
+      const ema12Series = chart.addLineSeries({
+        color: '#00bcd4',
+        lineWidth: 1,
+      });
+      const ema12Data = indicators.ema12
+        .map((value, i) => ({
+          time: data[i].time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.value !== null);
+      ema12Series.setData(ema12Data as any);
+    }
+
+    if (indicators?.ema26) {
+      const ema26Series = chart.addLineSeries({
+        color: '#ff5722',
+        lineWidth: 1,
+      });
+      const ema26Data = indicators.ema26
+        .map((value, i) => ({
+          time: data[i].time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.value !== null);
+      ema26Series.setData(ema26Data as any);
+    }
+
+    // Add Ichimoku Cloud
+    if (indicators?.ichimoku) {
+      const { tenkanSen, kijunSen, senkouSpanA, senkouSpanB, chikouSpan } = indicators.ichimoku;
+
+      // Tenkan-sen (Conversion Line) - blue
+      const tenkanSeries = chart.addLineSeries({
+        color: '#2962ff',
+        lineWidth: 1,
+        title: 'Tenkan',
+      });
+      const tenkanData = tenkanSen
+        .map((value, i) => ({
+          time: data[i]?.time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.time && d.value !== null);
+      tenkanSeries.setData(tenkanData as any);
+
+      // Kijun-sen (Base Line) - red
+      const kijunSeries = chart.addLineSeries({
+        color: '#b71c1c',
+        lineWidth: 1,
+        title: 'Kijun',
+      });
+      const kijunData = kijunSen
+        .map((value, i) => ({
+          time: data[i]?.time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.time && d.value !== null);
+      kijunSeries.setData(kijunData as any);
+
+      // Senkou Span A (Leading Span A) - green cloud boundary
+      const spanASeries = chart.addLineSeries({
+        color: 'rgba(76, 175, 80, 0.5)',
+        lineWidth: 1,
+        title: 'Span A',
+      });
+      const spanAData = senkouSpanA
+        .map((value, i) => ({
+          time: data[i]?.time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.time && d.value !== null);
+      spanASeries.setData(spanAData as any);
+
+      // Senkou Span B (Leading Span B) - red cloud boundary
+      const spanBSeries = chart.addLineSeries({
+        color: 'rgba(244, 67, 54, 0.5)',
+        lineWidth: 1,
+        title: 'Span B',
+      });
+      const spanBData = senkouSpanB
+        .map((value, i) => ({
+          time: data[i]?.time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.time && d.value !== null);
+      spanBSeries.setData(spanBData as any);
+
+      // Chikou Span (Lagging Span) - green dashed
+      const chikouSeries = chart.addLineSeries({
+        color: 'rgba(156, 39, 176, 0.7)',
+        lineWidth: 1,
+        lineStyle: 2,
+        title: 'Chikou',
+      });
+      const chikouData = chikouSpan
+        .map((value, i) => ({
+          time: data[i]?.time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.time && d.value !== null);
+      chikouSeries.setData(chikouData as any);
+    }
+
     // Add support/resistance lines
     supportResistance.forEach((sr) => {
       const lineSeries = chart.addLineSeries({

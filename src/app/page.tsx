@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ChartRef } from '@/components/Chart';
 import dynamic from 'next/dynamic';
 import { fetchCryptoOHLCV, fetchAssetInfo, getSupportedAssets, AssetInfo, fetchStockOHLCV, fetchStockInfo } from '@/lib/api';
-import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands, FibonacciRetracement, FibonacciLevel, VWAP, StochasticRSI, ATR, OBV } from '@/utils/indicators';
+import { OHLCV, SMA, EMA, RSI, MACD, BollingerBands, FibonacciRetracement, FibonacciLevel, VWAP, StochasticRSI, ATR, OBV, IchimokuCloud } from '@/utils/indicators';
 import { runAIAnalysis, AIAnalysis } from '@/utils/aiAnalysis';
 import { useTheme } from '@/hooks/useTheme';
 import { useWatchlist } from '@/hooks/useWatchlist';
@@ -28,6 +28,9 @@ import AssetScreener from '@/components/AssetScreener';
 import EconomicCalendar from '@/components/EconomicCalendar';
 import OverlayComparison from '@/components/OverlayComparison';
 import LivePriceIndicator from '@/components/LivePriceIndicator';
+import FundingRate from '@/components/FundingRate';
+import LiquidationLevels from '@/components/LiquidationLevels';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -202,6 +205,7 @@ export default function Home() {
     ema26: activeIndicators.includes('ema') ? EMA(ohlcvData.map(d => d.close), 26) : undefined,
     bb: activeIndicators.includes('bb') ? BollingerBands(ohlcvData.map(d => d.close)) : undefined,
     vwap: activeIndicators.includes('vwap') ? VWAP(ohlcvData) : undefined,
+    ichimoku: activeIndicators.includes('ichimoku') ? IchimokuCloud(ohlcvData) : undefined,
   };
   
   // Calculate RSI for display
@@ -313,6 +317,27 @@ export default function Home() {
               title="Export data to CSV"
             >
               📥
+            </button>
+            <button
+              onClick={() => {
+                if (ohlcvData.length > 0) {
+                  const screenshot = chartRef.current?.takeScreenshot() || null;
+                  import('@/utils/exportData').then(({ exportToPDF }) => {
+                    exportToPDF({
+                      symbol: selectedAsset,
+                      timeframe,
+                      data: ohlcvData,
+                      assetInfo,
+                      aiAnalysis,
+                      chartScreenshot: screenshot,
+                    });
+                  });
+                }
+              }}
+              className="theme-toggle"
+              title="Export PDF report"
+            >
+              📄
             </button>
             <button
               onClick={() => setShowCompare(true)}
@@ -502,6 +527,18 @@ export default function Home() {
         />
       )}
 
+      {/* Funding Rate & Liquidation Levels for crypto */}
+      {assetInfo && assets.find(a => a.symbol === selectedAsset)?.type === 'crypto' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <ErrorBoundary componentName="Funding Rate">
+            <FundingRate symbol={selectedAsset} />
+          </ErrorBoundary>
+          <ErrorBoundary componentName="Liquidation Levels">
+            <LiquidationLevels symbol={selectedAsset} currentPrice={assetInfo.price} />
+          </ErrorBoundary>
+        </div>
+      )}
+
       {/* Portfolio Tracker */}
       {portfolioMounted && (
         <Portfolio
@@ -613,18 +650,26 @@ export default function Home() {
       )}
 
       {/* Market Heatmap */}
-      <MarketHeatmap onSelectAsset={setSelectedAsset} />
+      <ErrorBoundary componentName="Market Heatmap">
+        <MarketHeatmap onSelectAsset={setSelectedAsset} />
+      </ErrorBoundary>
 
       {/* Asset Screener */}
-      <AssetScreener onSelectAsset={setSelectedAsset} />
+      <ErrorBoundary componentName="Asset Screener">
+        <AssetScreener onSelectAsset={setSelectedAsset} />
+      </ErrorBoundary>
 
       {/* Economic Calendar */}
-      <EconomicCalendar />
+      <ErrorBoundary componentName="Economic Calendar">
+        <EconomicCalendar />
+      </ErrorBoundary>
 
       {/* Strategy Backtester */}
-      {ohlcvData.length > 0 && (
-        <StrategyBacktest data={ohlcvData} symbol={selectedAsset} />
-      )}
+      <ErrorBoundary componentName="Strategy Backtester">
+        {ohlcvData.length > 0 && (
+          <StrategyBacktest data={ohlcvData} symbol={selectedAsset} />
+        )}
+      </ErrorBoundary>
 
       {/* Pattern Detection & Volume Profile */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -675,6 +720,7 @@ export default function Home() {
           { id: 'bb', label: 'Bollinger' },
           { id: 'vwap', label: 'VWAP' },
           { id: 'fib', label: 'Fibonacci' },
+          { id: 'ichimoku', label: 'Ichimoku' },
           { id: 'stochRsi', label: 'Stoch RSI' },
           { id: 'atr', label: 'ATR' },
           { id: 'obv', label: 'OBV' },

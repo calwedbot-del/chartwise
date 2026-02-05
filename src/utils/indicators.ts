@@ -358,6 +358,76 @@ export function OBV(candles: OHLCV[]): number[] {
   return result;
 }
 
+// Ichimoku Cloud
+export interface IchimokuData {
+  tenkanSen: number[];    // Conversion Line (9-period)
+  kijunSen: number[];     // Base Line (26-period)
+  senkouSpanA: number[];  // Leading Span A (displaced 26 periods ahead)
+  senkouSpanB: number[];  // Leading Span B (displaced 26 periods ahead)
+  chikouSpan: number[];   // Lagging Span (displaced 26 periods back)
+}
+
+function highLowAvg(candles: OHLCV[], start: number, period: number): number {
+  let high = -Infinity;
+  let low = Infinity;
+  for (let i = start; i < start + period && i < candles.length; i++) {
+    if (candles[i].high > high) high = candles[i].high;
+    if (candles[i].low < low) low = candles[i].low;
+  }
+  return (high + low) / 2;
+}
+
+export function IchimokuCloud(
+  candles: OHLCV[],
+  tenkanPeriod: number = 9,
+  kijunPeriod: number = 26,
+  senkouBPeriod: number = 52,
+  displacement: number = 26
+): IchimokuData {
+  const len = candles.length;
+  const tenkanSen: number[] = new Array(len).fill(NaN);
+  const kijunSen: number[] = new Array(len).fill(NaN);
+  const senkouSpanA: number[] = new Array(len + displacement).fill(NaN);
+  const senkouSpanB: number[] = new Array(len + displacement).fill(NaN);
+  const chikouSpan: number[] = new Array(len).fill(NaN);
+
+  for (let i = 0; i < len; i++) {
+    // Tenkan-sen (Conversion Line)
+    if (i >= tenkanPeriod - 1) {
+      tenkanSen[i] = highLowAvg(candles, i - tenkanPeriod + 1, tenkanPeriod);
+    }
+
+    // Kijun-sen (Base Line)
+    if (i >= kijunPeriod - 1) {
+      kijunSen[i] = highLowAvg(candles, i - kijunPeriod + 1, kijunPeriod);
+    }
+
+    // Senkou Span A (average of Tenkan & Kijun, displaced forward)
+    if (!isNaN(tenkanSen[i]) && !isNaN(kijunSen[i])) {
+      senkouSpanA[i + displacement] = (tenkanSen[i] + kijunSen[i]) / 2;
+    }
+
+    // Senkou Span B (52-period high-low avg, displaced forward)
+    if (i >= senkouBPeriod - 1) {
+      senkouSpanB[i + displacement] = highLowAvg(candles, i - senkouBPeriod + 1, senkouBPeriod);
+    }
+
+    // Chikou Span (current close, displaced backward)
+    if (i >= displacement) {
+      chikouSpan[i - displacement] = candles[i].close;
+    }
+  }
+
+  // Trim spans to original length for chart alignment
+  return {
+    tenkanSen,
+    kijunSen,
+    senkouSpanA: senkouSpanA.slice(0, len),
+    senkouSpanB: senkouSpanB.slice(0, len),
+    chikouSpan,
+  };
+}
+
 // Fibonacci Extension Levels (for price targets)
 export function FibonacciExtension(candles: OHLCV[]): FibonacciLevel[] {
   if (candles.length === 0) return [];
