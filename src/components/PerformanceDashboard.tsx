@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PortfolioWithPrices } from '@/hooks/usePortfolio';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 interface PerformanceSnapshot {
   timestamp: number;
@@ -44,14 +45,7 @@ export default function PerformanceDashboard({
 
   // Load history from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setHistory(JSON.parse(stored));
-      } catch {
-        setHistory([]);
-      }
-    }
+    setHistory(safeGetJSON<PerformanceSnapshot[]>(STORAGE_KEY, []));
   }, []);
 
   // Record daily snapshot (once per day)
@@ -76,7 +70,7 @@ export default function PerformanceDashboard({
 
       const newHistory = [...history, snapshot].slice(-365); // Keep up to 365 days
       setHistory(newHistory);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+      safeSetJSON(STORAGE_KEY, newHistory);
     }
   }, [holdings, totalValue, totalCost, history]);
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { OHLCV, RSI, MACD, SMA, BollingerBands } from '@/utils/indicators';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 type ConditionType = 'rsi_above' | 'rsi_below' | 'macd_cross_up' | 'macd_cross_down' | 
                      'price_above_sma' | 'price_below_sma' | 'bb_upper_touch' | 'bb_lower_touch' |
@@ -129,21 +130,12 @@ export default function AlertConditionsBuilder({
   // Load from localStorage
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setConditions(JSON.parse(stored));
-      } catch {
-        setConditions([]);
-      }
-    }
+    setConditions(safeGetJSON<AlertCondition[]>(STORAGE_KEY, []));
   }, []);
 
   const save = useCallback((newConditions: AlertCondition[]) => {
     setConditions(newConditions);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newConditions));
-    }
+    safeSetJSON(STORAGE_KEY, newConditions);
   }, []);
 
   // Check conditions when data updates

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 interface Trade {
   id: string;
@@ -31,15 +32,12 @@ export default function TradingJournal({ symbol, currentPrice, className = '' }:
 
   // Load trades from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('chartwise-trades');
-    if (stored) {
-      setTrades(JSON.parse(stored));
-    }
+    setTrades(safeGetJSON<Trade[]>('chartwise-trades', []));
   }, []);
 
   // Save trades to localStorage
   useEffect(() => {
-    localStorage.setItem('chartwise-trades', JSON.stringify(trades));
+    safeSetJSON('chartwise-trades', trades);
   }, [trades]);
 
   const addTrade = () => {

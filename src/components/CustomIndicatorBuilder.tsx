@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { OHLCV, SMA, EMA, RSI, ATR } from '@/utils/indicators';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 interface CustomIndicator {
   id: string;
@@ -206,21 +207,12 @@ export default function CustomIndicatorBuilder({ data, symbol, className = '' }:
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setIndicators(JSON.parse(stored));
-      } catch {
-        setIndicators([]);
-      }
-    }
+    setIndicators(safeGetJSON<CustomIndicator[]>(STORAGE_KEY, []));
   }, []);
 
   const save = useCallback((newIndicators: CustomIndicator[]) => {
     setIndicators(newIndicators);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newIndicators));
-    }
+    safeSetJSON(STORAGE_KEY, newIndicators);
   }, []);
 
   // Compute all enabled indicators

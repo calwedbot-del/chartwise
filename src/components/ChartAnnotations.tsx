@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 export interface Annotation {
   id: string;
@@ -182,21 +183,12 @@ export function useAnnotations() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('chartwise-annotations');
-    if (stored) {
-      try {
-        setAnnotations(JSON.parse(stored));
-      } catch {
-        setAnnotations([]);
-      }
-    }
+    setAnnotations(safeGetJSON<Annotation[]>('chartwise-annotations', []));
   }, []);
 
   const save = useCallback((newAnnotations: Annotation[]) => {
     setAnnotations(newAnnotations);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('chartwise-annotations', JSON.stringify(newAnnotations));
-    }
+    safeSetJSON('chartwise-annotations', newAnnotations);
   }, []);
 
   const addAnnotation = useCallback((annotation: Omit<Annotation, 'id' | 'createdAt'>) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 export interface PriceAlert {
   id: string;
@@ -20,6 +21,9 @@ export interface AlertHistoryItem {
   priceAtTrigger: number;
 }
 
+const ALERTS_KEY = 'chartwise-alerts';
+const HISTORY_KEY = 'chartwise-alert-history';
+
 export function usePriceAlerts() {
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [alertHistory, setAlertHistory] = useState<AlertHistoryItem[]>([]);
@@ -27,32 +31,18 @@ export function usePriceAlerts() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('chartwise-alerts');
-    const storedHistory = localStorage.getItem('chartwise-alert-history');
-    if (stored) {
-      try {
-        setAlerts(JSON.parse(stored));
-      } catch {
-        setAlerts([]);
-      }
-    }
-    if (storedHistory) {
-      try {
-        setAlertHistory(JSON.parse(storedHistory));
-      } catch {
-        setAlertHistory([]);
-      }
-    }
+    setAlerts(safeGetJSON<PriceAlert[]>(ALERTS_KEY, []));
+    setAlertHistory(safeGetJSON<AlertHistoryItem[]>(HISTORY_KEY, []));
   }, []);
 
   const saveAlerts = (newAlerts: PriceAlert[]) => {
     setAlerts(newAlerts);
-    localStorage.setItem('chartwise-alerts', JSON.stringify(newAlerts));
+    safeSetJSON(ALERTS_KEY, newAlerts);
   };
 
   const saveHistory = (newHistory: AlertHistoryItem[]) => {
     setAlertHistory(newHistory);
-    localStorage.setItem('chartwise-alert-history', JSON.stringify(newHistory));
+    safeSetJSON(HISTORY_KEY, newHistory);
   };
 
   const addAlert = useCallback((symbol: string, targetPrice: number, condition: 'above' | 'below') => {
@@ -87,7 +77,6 @@ export function usePriceAlerts() {
       
       if (shouldTrigger) {
         triggeredAlerts.push(alert);
-        // Add to history
         newHistoryItems.push({
           id: `hist-${alert.id}`,
           symbol: alert.symbol,
@@ -103,10 +92,8 @@ export function usePriceAlerts() {
     
     if (triggeredAlerts.length > 0) {
       saveAlerts(updated);
-      // Save to history (keep last 50)
       const updatedHistory = [...newHistoryItems, ...alertHistory].slice(0, 50);
       saveHistory(updatedHistory);
-      // Show browser notification if permitted
       if (typeof window !== 'undefined' && 'Notification' in window) {
         triggeredAlerts.forEach(alert => {
           if (Notification.permission === 'granted') {

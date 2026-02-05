@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { safeGetItem, safeSetItem } from '@/utils/storage';
 
 type Theme = 'dark' | 'light';
 
@@ -10,8 +11,7 @@ export function useTheme() {
 
   useEffect(() => {
     setMounted(true);
-    // Check localStorage or system preference
-    const stored = localStorage.getItem('chartwise-theme') as Theme | null;
+    const stored = safeGetItem('chartwise-theme') as Theme | null;
     if (stored) {
       setTheme(stored);
       document.documentElement.setAttribute('data-theme', stored);
@@ -24,7 +24,7 @@ export function useTheme() {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('chartwise-theme', newTheme);
+    safeSetItem('chartwise-theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 

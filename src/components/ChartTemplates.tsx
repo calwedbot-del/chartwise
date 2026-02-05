@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 export interface ChartTemplate {
   id: string;
@@ -96,19 +97,12 @@ export default function ChartTemplates({ currentConfig, onLoadTemplate, classNam
   // Load templates from localStorage
   useEffect(() => {
     setMounted(true);
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setTemplates(JSON.parse(stored));
-      }
-    } catch {
-      // ignore parse errors
-    }
+    setTemplates(safeGetJSON<ChartTemplate[]>(STORAGE_KEY, []));
   }, []);
 
   const saveTemplates = useCallback((newTemplates: ChartTemplate[]) => {
     setTemplates(newTemplates);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newTemplates));
+    safeSetJSON(STORAGE_KEY, newTemplates);
   }, []);
 
   const handleSave = () => {

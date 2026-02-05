@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
+
+const STORAGE_KEY = 'chartwise-watchlist';
 
 export function useWatchlist() {
   const [watchlist, setWatchlist] = useState<string[]>([]);
@@ -8,28 +11,22 @@ export function useWatchlist() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('chartwise-watchlist');
-    if (stored) {
-      try {
-        setWatchlist(JSON.parse(stored));
-      } catch {
-        setWatchlist([]);
-      }
-    }
+    setWatchlist(safeGetJSON<string[]>(STORAGE_KEY, []));
   }, []);
+
+  const save = (updated: string[]) => {
+    setWatchlist(updated);
+    safeSetJSON(STORAGE_KEY, updated);
+  };
 
   const addToWatchlist = (symbol: string) => {
     if (!watchlist.includes(symbol)) {
-      const updated = [...watchlist, symbol];
-      setWatchlist(updated);
-      localStorage.setItem('chartwise-watchlist', JSON.stringify(updated));
+      save([...watchlist, symbol]);
     }
   };
 
   const removeFromWatchlist = (symbol: string) => {
-    const updated = watchlist.filter(s => s !== symbol);
-    setWatchlist(updated);
-    localStorage.setItem('chartwise-watchlist', JSON.stringify(updated));
+    save(watchlist.filter(s => s !== symbol));
   };
 
   const isInWatchlist = (symbol: string) => watchlist.includes(symbol);

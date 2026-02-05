@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { safeGetJSON, safeSetJSON } from '@/utils/storage';
 
 export interface PortfolioHolding {
   symbol: string;
@@ -25,22 +26,13 @@ export function usePortfolio() {
   // Load from localStorage
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          setHoldings(JSON.parse(stored));
-        } catch {
-          // Ignore parse errors
-        }
-      }
-    }
+    setHoldings(safeGetJSON<PortfolioHolding[]>(STORAGE_KEY, []));
   }, []);
 
   // Save to localStorage
   useEffect(() => {
-    if (mounted && typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(holdings));
+    if (mounted) {
+      safeSetJSON(STORAGE_KEY, holdings);
     }
   }, [holdings, mounted]);
 
@@ -48,7 +40,6 @@ export function usePortfolio() {
     setHoldings(prev => {
       const existing = prev.find(h => h.symbol === symbol);
       if (existing) {
-        // Update existing holding (average cost calculation)
         const totalQty = existing.quantity + quantity;
         const newAvgCost = ((existing.quantity * existing.avgCost) + (quantity * avgCost)) / totalQty;
         return prev.map(h => 
@@ -57,7 +48,6 @@ export function usePortfolio() {
             : h
         );
       }
-      // Add new holding
       return [...prev, { symbol, quantity, avgCost, addedAt: Date.now() }];
     });
   }, []);
