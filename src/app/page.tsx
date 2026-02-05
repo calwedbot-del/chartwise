@@ -739,6 +739,8 @@ export default function Home() {
           { id: 'vwap', label: 'VWAP' },
           { id: 'fib', label: 'Fibonacci' },
           { id: 'ichimoku', label: 'Ichimoku' },
+          { id: 'rsi', label: 'RSI' },
+          { id: 'macd', label: 'MACD' },
           { id: 'stochRsi', label: 'Stoch RSI' },
           { id: 'atr', label: 'ATR' },
           { id: 'obv', label: 'OBV' },
@@ -799,6 +801,30 @@ export default function Home() {
         {/* Sub-chart Indicators */}
         {!loading && ohlcvData.length > 20 && (
           <>
+            {activeIndicators.includes('rsi') && (() => {
+              const rsiData = RSI(ohlcvData.map(d => d.close));
+              return (
+                <IndicatorChart
+                  type="rsi"
+                  data={ohlcvData}
+                  rsiValues={rsiData}
+                  height={isMobile ? 120 : 150}
+                />
+              );
+            })()}
+            {activeIndicators.includes('macd') && (() => {
+              const macdResult = MACD(ohlcvData.map(d => d.close));
+              return (
+                <IndicatorChart
+                  type="macd"
+                  data={ohlcvData}
+                  macdLine={macdResult.macd}
+                  macdSignal={macdResult.signal}
+                  macdHistogram={macdResult.histogram}
+                  height={isMobile ? 120 : 150}
+                />
+              );
+            })()}
             {activeIndicators.includes('stochRsi') && (() => {
               const stochData = StochasticRSI(ohlcvData.map(d => d.close));
               return (

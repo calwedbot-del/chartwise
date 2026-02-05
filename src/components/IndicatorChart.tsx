@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { createChart, ColorType, CrosshairMode, IChartApi } from 'lightweight-charts';
 
-export type IndicatorType = 'stochRsi' | 'atr' | 'obv';
+export type IndicatorType = 'stochRsi' | 'atr' | 'obv' | 'rsi' | 'macd';
 
 interface IndicatorChartProps {
   type: IndicatorType;
@@ -15,10 +15,18 @@ interface IndicatorChartProps {
   atrValues?: number[];
   // OBV data
   obvValues?: number[];
+  // RSI data
+  rsiValues?: number[];
+  // MACD data
+  macdLine?: number[];
+  macdSignal?: number[];
+  macdHistogram?: number[];
   height?: number;
 }
 
 const INDICATOR_CONFIG: Record<IndicatorType, { title: string; color: string }> = {
+  rsi: { title: 'RSI (14)', color: '#9c27b0' },
+  macd: { title: 'MACD (12, 26, 9)', color: '#2962ff' },
   stochRsi: { title: 'Stochastic RSI (14, 14, 3, 3)', color: '#2962ff' },
   atr: { title: 'ATR (14)', color: '#ff9800' },
   obv: { title: 'OBV', color: '#26a69a' },
@@ -31,6 +39,10 @@ export default function IndicatorChart({
   stochD,
   atrValues,
   obvValues,
+  rsiValues,
+  macdLine,
+  macdSignal,
+  macdHistogram,
   height = 150,
 }: IndicatorChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -144,6 +156,109 @@ export default function IndicatorChart({
             : 'rgba(239, 83, 80, 0.7)',
         }));
       obvSeries.setData(obvData as any);
+    } else if (type === 'rsi' && rsiValues) {
+      // RSI line
+      const rsiSeries = chart.addLineSeries({
+        color: '#9c27b0',
+        lineWidth: 2,
+        title: 'RSI',
+      });
+      const rsiData = rsiValues
+        .map((value, i) => ({
+          time: data[i].time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.value !== null);
+      rsiSeries.setData(rsiData as any);
+
+      // Overbought / Oversold
+      if (data.length >= 2) {
+        const obLine = chart.addLineSeries({
+          color: 'rgba(239, 83, 80, 0.4)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        obLine.setData([
+          { time: data[0].time, value: 70 },
+          { time: data[data.length - 1].time, value: 70 },
+        ] as any);
+
+        const osLine = chart.addLineSeries({
+          color: 'rgba(38, 166, 154, 0.4)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        osLine.setData([
+          { time: data[0].time, value: 30 },
+          { time: data[data.length - 1].time, value: 30 },
+        ] as any);
+
+        // Midline
+        const midLine = chart.addLineSeries({
+          color: 'rgba(255, 255, 255, 0.15)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        midLine.setData([
+          { time: data[0].time, value: 50 },
+          { time: data[data.length - 1].time, value: 50 },
+        ] as any);
+      }
+    } else if (type === 'macd' && macdLine && macdSignal && macdHistogram) {
+      // MACD Histogram
+      const histSeries = chart.addHistogramSeries({
+        title: 'Histogram',
+      });
+      const histData = macdHistogram
+        .map((value, i) => ({
+          time: data[i].time,
+          value: isNaN(value) ? 0 : value,
+          color: value >= 0 ? 'rgba(38, 166, 154, 0.7)' : 'rgba(239, 83, 80, 0.7)',
+        }))
+        .filter(d => d.time);
+      histSeries.setData(histData as any);
+
+      // MACD Line
+      const macdSeries = chart.addLineSeries({
+        color: '#2962ff',
+        lineWidth: 2,
+        title: 'MACD',
+      });
+      const macdLineData = macdLine
+        .map((value, i) => ({
+          time: data[i].time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.value !== null);
+      macdSeries.setData(macdLineData as any);
+
+      // Signal Line
+      const signalSeries = chart.addLineSeries({
+        color: '#ff6d00',
+        lineWidth: 1,
+        title: 'Signal',
+        lineStyle: 2,
+      });
+      const signalData = macdSignal
+        .map((value, i) => ({
+          time: data[i].time,
+          value: isNaN(value) ? null : value,
+        }))
+        .filter(d => d.value !== null);
+      signalSeries.setData(signalData as any);
+
+      // Zero line
+      if (data.length >= 2) {
+        const zeroLine = chart.addLineSeries({
+          color: 'rgba(255, 255, 255, 0.15)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        zeroLine.setData([
+          { time: data[0].time, value: 0 },
+          { time: data[data.length - 1].time, value: 0 },
+        ] as any);
+      }
     }
 
     chart.timeScale().fitContent();
@@ -161,7 +276,7 @@ export default function IndicatorChart({
       chartRef.current = null;
       chart.remove();
     };
-  }, [type, data, stochK, stochD, atrValues, obvValues, height]);
+  }, [type, data, stochK, stochD, atrValues, obvValues, rsiValues, macdLine, macdSignal, macdHistogram, height]);
 
   const config = INDICATOR_CONFIG[type];
 
