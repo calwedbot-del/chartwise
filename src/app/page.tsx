@@ -63,6 +63,8 @@ const AITradeSignals = dynamic(() => import('@/components/AITradeSignals'), { ss
 const RegimeDetector = dynamic(() => import('@/components/RegimeDetector'), { ssr: false });
 const MarketBreadth = dynamic(() => import('@/components/MarketBreadth'), { ssr: false });
 const OrderbookDepth = dynamic(() => import('@/components/OrderbookDepth'), { ssr: false });
+const CryptoCalendar = dynamic(() => import('@/components/CryptoCalendar'), { ssr: false });
+const OnChainMetrics = dynamic(() => import('@/components/OnChainMetrics'), { ssr: false });
 
 const TIMEFRAMES = ['1d', '7d', '14d', '30d', '90d', '180d', '365d'];
 const TIMEFRAME_LABELS: Record<string, string> = {
@@ -792,6 +794,16 @@ export default function Home() {
         </ErrorBoundary>
         <ErrorBoundary componentName="Market Breadth">
           <MarketBreadth />
+        </ErrorBoundary>
+      </div>
+
+      {/* Crypto Calendar & On-Chain Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <ErrorBoundary componentName="Crypto Calendar">
+          <CryptoCalendar />
+        </ErrorBoundary>
+        <ErrorBoundary componentName="On-Chain Metrics">
+          <OnChainMetrics />
         </ErrorBoundary>
       </div>
 
