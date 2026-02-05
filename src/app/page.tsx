@@ -34,6 +34,8 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import TradeTape from '@/components/TradeTape';
 import ChartTemplates from '@/components/ChartTemplates';
 import ShareButton from '@/components/ShareButton';
+import FearGreedIndex from '@/components/FearGreedIndex';
+import QuickStats from '@/components/QuickStats';
 
 // Dynamic import for chart (needs client-side only)
 const Chart = dynamic(() => import('@/components/Chart'), { ssr: false });
@@ -536,16 +538,21 @@ export default function Home() {
         />
       )}
 
-      {/* Funding Rate & Liquidation Levels for crypto */}
+      {/* Funding Rate, Liquidation Levels & Fear/Greed for crypto */}
       {assetInfo && assets.find(a => a.symbol === selectedAsset)?.type === 'crypto' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <ErrorBoundary componentName="Funding Rate">
-            <FundingRate symbol={selectedAsset} />
-          </ErrorBoundary>
-          <ErrorBoundary componentName="Liquidation Levels">
-            <LiquidationLevels symbol={selectedAsset} currentPrice={assetInfo.price} />
-          </ErrorBoundary>
-        </div>
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <ErrorBoundary componentName="Funding Rate">
+              <FundingRate symbol={selectedAsset} />
+            </ErrorBoundary>
+            <ErrorBoundary componentName="Liquidation Levels">
+              <LiquidationLevels symbol={selectedAsset} currentPrice={assetInfo.price} />
+            </ErrorBoundary>
+            <ErrorBoundary componentName="Fear & Greed Index">
+              <FearGreedIndex />
+            </ErrorBoundary>
+          </div>
+        </>
       )}
 
       {/* Trade Tape for crypto */}
@@ -701,6 +708,13 @@ export default function Home() {
         <TradingJournal symbol={selectedAsset} currentPrice={assetInfo?.price || 0} />
       </div>
       
+      {/* Quick Stats Bar */}
+      {ohlcvData.length > 20 && (
+        <div className="mb-4">
+          <QuickStats data={ohlcvData} symbol={selectedAsset} />
+        </div>
+      )}
+
       {/* Chart Type & Indicators Toggle */}
       <div className="indicator-scroll flex flex-wrap items-center gap-4 mb-4 overflow-x-auto pb-2">
         {/* Chart Type Selector */}
