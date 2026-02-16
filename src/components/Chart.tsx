@@ -461,6 +461,52 @@ const Chart = forwardRef<ChartRef, ChartProps>(function Chart({
           { time: rightTime, value: bottomPrice },
         ] as any);
         drawingSeriesRef.current.push(bottomLine);
+      } else if (drawing.type === 'fibonacci' && drawing.points.length >= 2) {
+        const p1 = drawing.points[0];
+        const p2 = drawing.points[1];
+        const diff = p1.price - p2.price;
+        const ratios = [
+          { r: 0, label: '0.0' },
+          { r: 0.236, label: '0.236' },
+          { r: 0.382, label: '0.382' },
+          { r: 0.5, label: '0.5' },
+          { r: 0.618, label: '0.618' },
+          { r: 0.786, label: '0.786' },
+          { r: 1, label: '1.0' }
+        ];
+
+        ratios.forEach(({ r, label }) => {
+          const price = p1.price - (diff * r);
+          const fLine = chart.addLineSeries({
+            color: drawing.color || '#3b82f6',
+            lineWidth: 1,
+            lineStyle: 2,
+            crosshairMarkerVisible: false,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          
+          fLine.setData([
+            { time: Math.min(p1.time, p2.time), value: price },
+            { time: Math.max(p1.time, p2.time), value: price },
+          ] as any);
+          drawingSeriesRef.current.push(fLine);
+        });
+
+        // Add main diagonal connector
+        const diagLine = chart.addLineSeries({
+          color: drawing.color || '#3b82f6',
+          lineWidth: 1,
+          lineStyle: 2,
+          crosshairMarkerVisible: false,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        });
+        diagLine.setData([
+          { time: p1.time, value: p1.price },
+          { time: p2.time, value: p2.price },
+        ] as any);
+        drawingSeriesRef.current.push(diagLine);
       }
     });
 

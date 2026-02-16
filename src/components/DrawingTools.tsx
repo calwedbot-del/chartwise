@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export type DrawingTool = 'none' | 'trendline' | 'horizontal' | 'rectangle' | 'text';
+export type DrawingTool = 'none' | 'trendline' | 'horizontal' | 'rectangle' | 'text' | 'fibonacci';
 
 export interface Drawing {
   id: string;
@@ -27,6 +27,7 @@ const TOOLS = [
   { id: 'none' as DrawingTool, icon: '🖱️', label: 'Select', shortcut: 'Esc' },
   { id: 'trendline' as DrawingTool, icon: '📐', label: 'Trend Line', shortcut: 'T' },
   { id: 'horizontal' as DrawingTool, icon: '➖', label: 'Horizontal', shortcut: 'H' },
+  { id: 'fibonacci' as DrawingTool, icon: '📊', label: 'Fibonacci', shortcut: 'F' },
   { id: 'rectangle' as DrawingTool, icon: '⬜', label: 'Rectangle', shortcut: 'R' },
   { id: 'text' as DrawingTool, icon: '📝', label: 'Text', shortcut: 'X' },
 ];
