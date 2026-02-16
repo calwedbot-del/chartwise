@@ -335,16 +335,16 @@ export default function Home() {
       <div className="p-4 md:p-6">
       {/* Header */}
       <header className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+            <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
               ChartWise
             </h1>
-            <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">AI-Powered</span>
+            <span className="hidden sm:inline-block px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">AI-Powered</span>
             <AssetSearch onSelect={setSelectedAsset} currentAsset={selectedAsset} />
           </div>
           {/* Tools: Share, Screenshot, Compare, Theme */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
             <ShareButton
               symbol={selectedAsset}
               timeframe={timeframe}
@@ -436,12 +436,12 @@ export default function Home() {
         {/* Asset Selector */}
         <div className="mb-4">
           <div className="text-xs text-gray-500 mb-2">CRYPTO</div>
-          <div className="asset-scroll flex flex-wrap sm:flex-wrap gap-2 mb-3">
+          <div className="asset-scroll flex flex-nowrap overflow-x-auto gap-2 mb-3 no-scrollbar">
             {assets.filter(a => a.type === 'crypto').map(asset => (
-              <div key={asset.symbol} className="flex items-center gap-1">
+              <div key={asset.symbol} className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => setSelectedAsset(asset.symbol)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     selectedAsset === asset.symbol
                       ? 'bg-blue-500 text-white'
                       : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
@@ -464,12 +464,12 @@ export default function Home() {
             ))}
           </div>
           <div className="text-xs text-gray-500 mb-2">STOCKS</div>
-          <div className="asset-scroll flex flex-wrap sm:flex-wrap gap-2">
+          <div className="asset-scroll flex flex-nowrap overflow-x-auto gap-2 no-scrollbar">
             {assets.filter(a => a.type === 'stock').map(asset => (
-              <div key={asset.symbol} className="flex items-center gap-1">
+              <div key={asset.symbol} className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => setSelectedAsset(asset.symbol)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     selectedAsset === asset.symbol
                       ? 'bg-green-500 text-white'
                       : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
@@ -494,12 +494,12 @@ export default function Home() {
         </div>
         
         {/* Timeframe Selector */}
-        <div className="asset-scroll flex gap-2 overflow-x-auto pb-2">
+        <div className="asset-scroll flex flex-nowrap gap-2 overflow-x-auto pb-2 no-scrollbar">
           {TIMEFRAMES.map(tf => (
             <button
               key={tf}
               onClick={() => setTimeframe(tf)}
-              className={`px-3 py-1 rounded text-sm transition-all ${
+              className={`px-3 py-1 rounded text-sm transition-all flex-shrink-0 ${
                 timeframe === tf
                   ? 'bg-[#2962ff] text-white'
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
@@ -875,12 +875,18 @@ export default function Home() {
       </div>
 
       {/* News Feed, Sentiment & Trading Journal */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <NewsFeed symbol={selectedAsset} />
-        <ErrorBoundary componentName="News Sentiment">
-          <NewsSentiment symbol={selectedAsset} />
-        </ErrorBoundary>
-        <TradingJournal symbol={selectedAsset} currentPrice={assetInfo?.price || 0} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="md:col-span-1">
+          <NewsFeed symbol={selectedAsset} />
+        </div>
+        <div className="md:col-span-1">
+          <ErrorBoundary componentName="News Sentiment">
+            <NewsSentiment symbol={selectedAsset} />
+          </ErrorBoundary>
+        </div>
+        <div className="md:col-span-2 lg:col-span-1">
+          <TradingJournal symbol={selectedAsset} currentPrice={assetInfo?.price || 0} />
+        </div>
       </div>
       
       {/* Quick Stats Bar */}
