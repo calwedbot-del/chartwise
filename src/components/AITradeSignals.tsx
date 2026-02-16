@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { OHLCV, RSI, MACD, SMA, EMA, BollingerBands, ATR, OBV, StochasticRSI } from '@/utils/indicators';
+import { useNews, NewsItem } from '@/hooks/useNews';
 
 interface Signal {
   name: string;
@@ -16,6 +17,7 @@ interface SignalSummary {
   overallScore: number; // -100 to 100
   overallSignal: 'Strong Buy' | 'Buy' | 'Neutral' | 'Sell' | 'Strong Sell';
   confidence: number; // 0-100
+  newsScore: number;
 }
 
 interface AITradeSignalsProps {
@@ -25,9 +27,40 @@ interface AITradeSignalsProps {
   className?: string;
 }
 
-function generateSignals(data: OHLCV[], currentPrice: number): SignalSummary {
+function analyzeNewsSentiment(news: NewsItem[]): { score: number; signal?: Signal } {
+  if (news.length === 0) return { score: 0 };
+
+  const positiveKeywords = ['surge', 'rally', 'gains', 'bullish', 'soars', 'jumps', 'rises', 'record', 'boom', 'growth', 'profit', 'success', 'breakthrough', 'partnership', 'upgrade', 'adoption'];
+  const negativeKeywords = ['crash', 'plunge', 'drop', 'bearish', 'falls', 'down', 'low', 'loss', 'decline', 'slump', 'fear', 'risk', 'warning', 'concern', 'sell', 'hack', 'scam', 'lawsuit', 'fine'];
+
+  let score = 0;
+  news.slice(0, 10).forEach(item => {
+    const title = item.title.toLowerCase();
+    const p = positiveKeywords.filter(w => title.includes(w)).length;
+    const n = negativeKeywords.filter(w => title.includes(w)).length;
+    score += (p - n);
+  });
+
+  // Normalize score to -100 to 100
+  const normalizedScore = Math.max(-100, Math.min(100, score * 15));
+  
+  if (Math.abs(normalizedScore) < 10) return { score: normalizedScore };
+
+  return {
+    score: normalizedScore,
+    signal: {
+      name: normalizedScore > 0 ? 'Bullish Narrative' : 'Bearish Narrative',
+      type: normalizedScore > 0 ? 'bullish' : 'bearish',
+      strength: Math.abs(normalizedScore),
+      description: `Sentiment from ${news.length} recent news items is ${normalizedScore > 0 ? 'positive' : 'negative'}`,
+      indicator: 'News'
+    }
+  };
+}
+
+function generateSignals(data: OHLCV[], currentPrice: number, news: NewsItem[]): SignalSummary {
   if (data.length < 50) {
-    return { signals: [], overallScore: 0, overallSignal: 'Neutral', confidence: 0 };
+    return { signals: [], overallScore: 0, overallSignal: 'Neutral', confidence: 0, newsScore: 0 };
   }
 
   const closes = data.map(d => d.close);
@@ -189,30 +222,41 @@ function generateSignals(data: OHLCV[], currentPrice: number): SignalSummary {
     });
   }
 
-  // Calculate overall score
-  let score = 0;
-  let totalWeight = 0;
-  for (const signal of signals) {
+  // 9. News Sentiment Analysis
+  const { score: newsScore, signal: newsSignal } = analyzeNewsSentiment(news);
+  if (newsSignal) {
+    signals.push(newsSignal);
+  }
+
+  // Calculate overall score (weighted: Technical 70%, Sentiment 30%)
+  let techScore = 0;
+  let techWeight = 0;
+  for (const signal of signals.filter(s => s.indicator !== 'News')) {
     const weight = signal.strength / 100;
     const direction = signal.type === 'bullish' ? 1 : signal.type === 'bearish' ? -1 : 0;
-    score += direction * weight * signal.strength;
-    totalWeight += weight;
+    techScore += direction * weight * signal.strength;
+    techWeight += weight;
   }
-  const overallScore = totalWeight > 0 ? Math.max(-100, Math.min(100, score / totalWeight)) : 0;
   
-  const confidence = Math.min(signals.length * 12, 95);
+  const finalTechScore = techWeight > 0 ? techScore / techWeight : 0;
+  const overallScore = news.length > 0 
+    ? (finalTechScore * 0.7 + newsScore * 0.3)
+    : finalTechScore;
+  
+  const confidence = Math.min((signals.length * 10) + (news.length > 0 ? 15 : 0), 98);
 
   let overallSignal: SignalSummary['overallSignal'] = 'Neutral';
-  if (overallScore >= 50) overallSignal = 'Strong Buy';
-  else if (overallScore >= 20) overallSignal = 'Buy';
-  else if (overallScore <= -50) overallSignal = 'Strong Sell';
-  else if (overallScore <= -20) overallSignal = 'Sell';
+  if (overallScore >= 45) overallSignal = 'Strong Buy';
+  else if (overallScore >= 15) overallSignal = 'Buy';
+  else if (overallScore <= -45) overallSignal = 'Strong Sell';
+  else if (overallScore <= -15) overallSignal = 'Sell';
 
-  return { signals, overallScore, overallSignal, confidence };
+  return { signals, overallScore, overallSignal, confidence, newsScore };
 }
 
 export default function AITradeSignals({ data, symbol, currentPrice, className = '' }: AITradeSignalsProps) {
-  const summary = useMemo(() => generateSignals(data, currentPrice), [data, currentPrice]);
+  const { news, loading: newsLoading } = useNews(symbol);
+  const summary = useMemo(() => generateSignals(data, currentPrice, news), [data, currentPrice, news]);
 
   if (summary.signals.length === 0) return null;
 
@@ -245,11 +289,15 @@ export default function AITradeSignals({ data, symbol, currentPrice, className =
       {/* Score Gauge */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1">
-          <span>Bearish</span>
-          <span className={`text-sm font-bold ${signalColor}`}>
-            Score: {summary.overallScore > 0 ? '+' : ''}{summary.overallScore.toFixed(0)}
+          <span className="flex items-center gap-1">
+            📉 Technical: {summary.overallScore > (summary.newsScore * 0.3) ? 'Bullish' : 'Bearish'}
           </span>
-          <span>Bullish</span>
+          <span className={`text-sm font-bold ${signalColor}`}>
+            Total Score: {summary.overallScore > 0 ? '+' : ''}{summary.overallScore.toFixed(0)}
+          </span>
+          <span className="flex items-center gap-1">
+            📰 News: {summary.newsScore > 0 ? 'Positive' : summary.newsScore < 0 ? 'Negative' : 'Neutral'}
+          </span>
         </div>
         <div className="h-3 bg-gray-700 rounded-full overflow-hidden relative">
           <div className="absolute inset-0 flex">
