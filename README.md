@@ -14,17 +14,19 @@ The goal: Build the best charting tool available — open source, community-driv
 - **AI Analysis** — Pattern detection, trend analysis, sentiment scoring
 - **Multiple timeframes** — 1d, 7d, 30d, 90d, 365d
 - **RSI & MACD** — Momentum indicators with signals
+- **Mobile Responsive** — Optimized UI for phones and tablets
+- **Price Alerts** — Browser-based target price notifications
+- **Watchlist** — Local persistence for favorite assets
+- **Drawing Tools** — Trendlines, Horizontal lines, Rectangles, Fibonacci Retracement
 
 ### 🚧 Roadmap
-- [ ] Mobile responsive design
-- [ ] Price alerts & notifications
-- [ ] Drawing tools (trendlines, fibonacci)
 - [ ] Multi-chart layouts
-- [ ] Watchlist with persistence
+- [ ] Drawing tools (Elliott Waves, Gann Fans)
 - [ ] More indicators (VWAP, Ichimoku, custom)
-- [ ] Real-time websocket prices
+- [ ] Real-time websocket prices (Binance/Kraken)
 - [ ] Social features (share charts)
-- [ ] AI trade signals
+- [ ] Server-side Alerts (Telegram/SMS/Email)
+- [ ] AI-driven Buy/Sell Signals (LLM enhanced)
 
 ## Tech Stack
 
